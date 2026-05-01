@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Alert, AlertDescription } from '../ui/alert';
-import { AlertCircle, Save, ArrowRight } from 'lucide-react';
+import { AlertCircle, Save, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface ApplicationFormProps {
   onSave: (data: any) => void;
@@ -15,12 +16,12 @@ interface ApplicationFormProps {
 export function ApplicationForm({ onSave, onCancel }: ApplicationFormProps) {
   const [formData, setFormData] = useState({
     // Auto-filled from user profile
-    name: 'Ahmet',
-    surname: 'Yılmaz',
-    tckn: '12345678901',
-    studentId: '2021234567',
-    currentUniversity: 'Istanbul Technical University',
-    currentProgram: 'Industrial Engineering',
+    name: '',
+    surname: '',
+    tckn: '',
+    studentId: '',
+    currentUniversity: '',
+    currentProgram: '',
     
     // User inputs
     targetProgram: '',
@@ -32,6 +33,39 @@ export function ApplicationForm({ onSave, onCancel }: ApplicationFormProps) {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isDraft, setIsDraft] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [apiDown, setApiDown] = useState(false); // Mock API status
+
+  // Simulate YÖKSİS/ÖSYM data fetch
+  useEffect(() => {
+    const fetchExternalData = async () => {
+      setIsLoading(true);
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Mock API down scenario check
+      const mockApiDown = false; // Change to true to simulate system down
+      if (mockApiDown) {
+        setApiDown(true);
+        setIsLoading(false);
+        return;
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        name: 'Ahmet',
+        surname: 'Yılmaz',
+        tckn: '12345678901',
+        studentId: '2021234567',
+        currentUniversity: 'Istanbul Technical University',
+        currentProgram: 'Industrial Engineering',
+      }));
+      setIsLoading(false);
+      toast.success('Academic data successfully retrieved from YÖKSİS/ÖSYM');
+    };
+
+    fetchExternalData();
+  }, []);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -77,14 +111,41 @@ export function ApplicationForm({ onSave, onCancel }: ApplicationFormProps) {
   const handleSaveDraft = () => {
     setIsDraft(true);
     onSave({ ...formData, status: 'draft' });
+    toast.success('Draft saved successfully');
   };
 
   const handleContinue = () => {
     if (validateForm()) {
       setIsDraft(false);
       onSave({ ...formData, status: 'in_progress' });
+      toast.success('Information saved, proceeding to document upload');
     }
   };
+
+  const isFormValid = () => {
+    const gpaNum = parseFloat(formData.gpa);
+    const isValidGpa = !isNaN(gpaNum) && gpaNum >= 2.50 && gpaNum <= 4.0;
+    const isValidSemester = formData.targetSemester === '3' || formData.targetSemester === '5';
+    const hasRequiredFields = formData.targetProgram && formData.osymScore && formData.osymYear;
+    return isValidGpa && isValidSemester && hasRequiredFields && !apiDown;
+  };
+
+  if (apiDown) {
+    return (
+      <div className="space-y-6">
+        <Alert variant="destructive" className="p-8 flex flex-col items-center text-center">
+          <AlertCircle className="h-12 w-12 mb-4" />
+          <h2 className="text-xl font-bold mb-2">System Unavailable</h2>
+          <AlertDescription className="text-lg">
+            External data systems (YÖKSİS/ÖSYM) are currently offline.
+            Manual entry is not permitted for security reasons.
+            Please try again later.
+          </AlertDescription>
+          <Button variant="outline" onClick={onCancel} className="mt-6">Return to Dashboard</Button>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -98,39 +159,73 @@ export function ApplicationForm({ onSave, onCancel }: ApplicationFormProps) {
       <Card className="p-6">
         <form className="space-y-6">
           {/* Personal Information (Auto-filled) */}
-          <div>
-            <h2 className="text-gray-900 mb-4 pb-2 border-b">Personal Information</h2>
+          <div className="relative">
+            {isLoading && (
+              <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center rounded-lg">
+                <Loader2 className="h-8 w-8 animate-spin text-[#C00000]" />
+              </div>
+            )}
+            <div className="flex items-center justify-between mb-4 border-b pb-2">
+              <h2 className="text-gray-900">Personal Information</h2>
+              {!isLoading && <div className="flex items-center text-xs text-green-600 font-medium"><CheckCircle2 className="w-3 h-3 mr-1" /> Verified by ÖSYM</div>}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
-                <Input id="name" value={formData.name} disabled />
+                <div className="relative">
+                  <Input id="name" value={formData.name} readOnly className="bg-gray-50" />
+                  {!isLoading && <CheckCircle2 className="absolute right-3 top-2.5 h-4 w-4 text-green-600" />}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="surname">Surname</Label>
-                <Input id="surname" value={formData.surname} disabled />
+                <div className="relative">
+                  <Input id="surname" value={formData.surname} readOnly className="bg-gray-50" />
+                  {!isLoading && <CheckCircle2 className="absolute right-3 top-2.5 h-4 w-4 text-green-600" />}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tckn">T.C. Identity Number</Label>
-                <Input id="tckn" value={formData.tckn} disabled />
+                <div className="relative">
+                  <Input id="tckn" value={formData.tckn} readOnly className="bg-gray-50" />
+                  {!isLoading && <CheckCircle2 className="absolute right-3 top-2.5 h-4 w-4 text-green-600" />}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="studentId">Student ID</Label>
-                <Input id="studentId" value={formData.studentId} disabled />
+                <div className="relative">
+                  <Input id="studentId" value={formData.studentId} readOnly className="bg-gray-50" />
+                  {!isLoading && <CheckCircle2 className="absolute right-3 top-2.5 h-4 w-4 text-green-600" />}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Current Academic Information */}
-          <div>
-            <h2 className="text-gray-900 mb-4 pb-2 border-b">Current Academic Information</h2>
+          <div className="relative">
+            {isLoading && (
+              <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center rounded-lg">
+                <Loader2 className="h-8 w-8 animate-spin text-[#C00000]" />
+              </div>
+            )}
+            <div className="flex items-center justify-between mb-4 border-b pb-2">
+              <h2 className="text-gray-900">Current Academic Information</h2>
+              {!isLoading && <div className="flex items-center text-xs text-green-600 font-medium"><CheckCircle2 className="w-3 h-3 mr-1" /> Verified by YÖKSİS</div>}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="currentUniversity">Current University</Label>
-                <Input id="currentUniversity" value={formData.currentUniversity} disabled />
+                <div className="relative">
+                  <Input id="currentUniversity" value={formData.currentUniversity} readOnly className="bg-gray-50" />
+                  {!isLoading && <CheckCircle2 className="absolute right-3 top-2.5 h-4 w-4 text-green-600" />}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="currentProgram">Current Program</Label>
-                <Input id="currentProgram" value={formData.currentProgram} disabled />
+                <div className="relative">
+                  <Input id="currentProgram" value={formData.currentProgram} readOnly className="bg-gray-50" />
+                  {!isLoading && <CheckCircle2 className="absolute right-3 top-2.5 h-4 w-4 text-green-600" />}
+                </div>
               </div>
             </div>
           </div>
@@ -154,6 +249,7 @@ export function ApplicationForm({ onSave, onCancel }: ApplicationFormProps) {
                     <SelectItem value="mechanical-eng">Mechanical Engineering</SelectItem>
                     <SelectItem value="industrial-eng">Industrial Engineering</SelectItem>
                     <SelectItem value="civil-eng">Civil Engineering</SelectItem>
+                    <SelectItem value="architecture">Architecture</SelectItem>
                   </SelectContent>
                 </Select>
                 {errors.targetProgram && (
@@ -255,6 +351,7 @@ export function ApplicationForm({ onSave, onCancel }: ApplicationFormProps) {
                 type="button" 
                 variant="outline" 
                 onClick={handleSaveDraft}
+                disabled={isLoading || !isFormValid()}
               >
                 <Save className="w-4 h-4 mr-2" />
                 Save Draft
@@ -262,8 +359,11 @@ export function ApplicationForm({ onSave, onCancel }: ApplicationFormProps) {
               <Button 
                 type="button" 
                 onClick={handleContinue}
+                disabled={isLoading || !isFormValid()}
                 style={{ backgroundColor: '#C00000' }}
+                className={!isFormValid() ? 'opacity-50' : ''}
               >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 Save & Continue
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>

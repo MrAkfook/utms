@@ -10,7 +10,10 @@ import {
   AlertTriangle,
   FileText,
   Eye,
-  Send
+  Send,
+  ZoomIn,
+  ZoomOut,
+  Download
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Alert, AlertDescription } from '../ui/alert';
@@ -29,7 +32,7 @@ export function IntakeVerification({ applicationId, onBack }: IntakeVerification
   const [returnReasons, setReturnReasons] = useState<string[]>([]);
   const [officerComment, setOfficerComment] = useState('');
 
-  // Mock application data
+  // Mock application data with high precision scores
   const appData = {
     id: applicationId,
     student: {
@@ -41,22 +44,24 @@ export function IntakeVerification({ applicationId, onBack }: IntakeVerification
     application: {
       targetProgram: 'Computer Engineering',
       targetSemester: '3',
-      gpa: '3.45',
-      osymScore: '485.5',
+      gpa: '3.45000',
+      osymScore: '485.50000',
       osymYear: '2024',
       currentUniversity: 'Istanbul Technical University',
       currentProgram: 'Industrial Engineering'
     },
     documents: [
-      { id: 'transcript', name: 'Official Transcript', status: 'verified', size: '2.4 MB' },
-      { id: 'osym', name: 'ÖSYM Result', status: 'verified', size: '1.8 MB' },
-      { id: 'curriculum', name: 'Curriculum', status: 'verified', size: '3.2 MB' },
-      { id: 'certificate', name: 'Student Certificate', status: 'verified', size: '1.2 MB' },
-      { id: 'language', name: 'Language Proficiency', status: 'manual_check', size: '2.1 MB' },
-      { id: 'course_contents', name: 'Course Contents', status: 'verified', size: '5.6 MB' }
+      { id: 'transcript', name: 'Official Transcript', status: 'verified', size: '2.4 MB', edevlet: 'Verified' },
+      { id: 'osym', name: 'ÖSYM Result', status: 'verified', size: '1.8 MB', edevlet: 'Verified' },
+      { id: 'curriculum', name: 'Curriculum', status: 'verified', size: '3.2 MB', edevlet: 'Manual Check Required' },
+      { id: 'certificate', name: 'Student Certificate', status: 'verified', size: '1.2 MB', edevlet: 'Verified' },
+      { id: 'language', name: 'Language Proficiency', status: 'manual_check', size: '2.1 MB', edevlet: 'Manual Check Required' },
+      { id: 'course_contents', name: 'Course Contents', status: 'verified', size: '5.6 MB', edevlet: 'Invalid' }
     ],
     submittedDate: '2025-01-10 14:30'
   };
+
+  const [selectedDoc, setSelectedDoc] = useState<any>(appData.documents[0]);
 
   const returnReasonOptions = [
     'Incomplete transcript',
@@ -75,7 +80,6 @@ export function IntakeVerification({ applicationId, onBack }: IntakeVerification
 
   const handleReturn = () => {
     if (returnReasons.length > 0) {
-      // Process return
       setShowReturnModal(false);
       onBack();
     }
@@ -83,7 +87,6 @@ export function IntakeVerification({ applicationId, onBack }: IntakeVerification
 
   const handleReject = () => {
     if (officerComment.trim()) {
-      // Process rejection
       setShowRejectModal(false);
       onBack();
     }
@@ -97,188 +100,200 @@ export function IntakeVerification({ applicationId, onBack }: IntakeVerification
     }
   };
 
+  const getEDevletBadge = (status: string) => {
+    switch (status) {
+      case 'Verified':
+        return <Badge className="bg-green-600 hover:bg-green-700 text-white border-none text-[10px]">e-Devlet: Verified</Badge>;
+      case 'Manual Check Required':
+        return <Badge className="bg-yellow-500 hover:bg-yellow-600 text-white border-none text-[10px]">e-Devlet: Manual Check</Badge>;
+      case 'Invalid':
+        return <Badge className="bg-red-600 hover:bg-red-700 text-white border-none text-[10px]">e-Devlet: Invalid</Badge>;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-[calc(100vh-120px)] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-gray-900 mb-2">Application Intake Verification</h1>
-          <p className="text-gray-600">Application ID: {applicationId}</p>
-        </div>
-        <Button variant="outline" onClick={onBack}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Queue
-        </Button>
-      </div>
-
-      {/* Student Information */}
-      <Card className="p-6">
-        <h2 className="text-gray-900 mb-4">Student Information</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="flex items-center justify-between p-4 bg-white border-b shrink-0">
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" size="sm" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back
+          </Button>
           <div>
-            <div className="text-sm text-gray-600">Full Name</div>
-            <div className="text-gray-900">{appData.student.name}</div>
-          </div>
-          <div>
-            <div className="text-sm text-gray-600">T.C. Identity Number</div>
-            <div className="text-gray-900">{appData.student.tckn}</div>
-          </div>
-          <div>
-            <div className="text-sm text-gray-600">Student ID</div>
-            <div className="text-gray-900">{appData.student.studentId}</div>
-          </div>
-          <div>
-            <div className="text-sm text-gray-600">Email</div>
-            <div className="text-gray-900">{appData.student.email}</div>
+            <h1 className="text-lg font-bold text-gray-900">Application Intake Verification</h1>
+            <p className="text-xs text-gray-500">ID: {applicationId} • Student: {appData.student.name}</p>
           </div>
         </div>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Application Data */}
-        <Card className="p-6">
-          <h2 className="text-gray-900 mb-4">Application Data</h2>
-          <div className="space-y-3">
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-sm text-gray-600">Target Program</div>
-              <div className="text-gray-900">{appData.application.targetProgram}</div>
-            </div>
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-sm text-gray-600">Target Semester</div>
-              <div className="text-gray-900">{appData.application.targetSemester}rd Semester</div>
-            </div>
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-sm text-gray-600">Current GPA</div>
-              <div className="text-gray-900">{appData.application.gpa} / 4.00</div>
-              {parseFloat(appData.application.gpa) >= 2.50 && (
-                <div className="text-xs text-green-600 mt-1">✓ Meets minimum requirement</div>
-              )}
-            </div>
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-sm text-gray-600">ÖSYM Score</div>
-              <div className="text-gray-900">{appData.application.osymScore} ({appData.application.osymYear})</div>
-            </div>
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-sm text-gray-600">Current University</div>
-              <div className="text-gray-900">{appData.application.currentUniversity}</div>
-            </div>
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-sm text-gray-600">Current Program</div>
-              <div className="text-gray-900">{appData.application.currentProgram}</div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Documents Verification */}
-        <Card className="p-6">
-          <h2 className="text-gray-900 mb-4">Documents Verification</h2>
-          <div className="space-y-3">
-            {appData.documents.map((doc) => (
-              <div key={doc.id} className="p-3 bg-gray-50 rounded">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    <FileText className="w-4 h-4 text-gray-600" />
-                    <div className="text-sm text-gray-900">{doc.name}</div>
-                  </div>
-                  {doc.status === 'verified' && (
-                    <Badge className="bg-green-100 text-green-800 text-xs">Verified</Badge>
-                  )}
-                  {doc.status === 'manual_check' && (
-                    <Badge className="bg-yellow-100 text-yellow-800 text-xs">Manual Check</Badge>
-                  )}
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-gray-500">Size: {doc.size}</div>
-                  <Button size="sm" variant="ghost">
-                    <Eye className="w-3 h-3 mr-1" />
-                    View
-                  </Button>
-                </div>
-                {doc.status === 'manual_check' && (
-                  <Alert className="mt-2">
-                    <AlertTriangle className="h-3 w-3" />
-                    <AlertDescription className="text-xs">
-                      This document requires manual verification
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
-
-      {/* Document Authenticity Check */}
-      <Card className="p-6">
-        <h2 className="text-gray-900 mb-4">Document Authenticity Indicators</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-            <div className="flex items-center space-x-2 mb-2">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-              <div className="text-sm text-gray-900">Identity Verification</div>
-            </div>
-            <div className="text-xs text-gray-600">TCKN validated via e-Government</div>
-          </div>
-          <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-            <div className="flex items-center space-x-2 mb-2">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-              <div className="text-sm text-gray-900">ÖSYM Data</div>
-            </div>
-            <div className="text-xs text-gray-600">Score verified with ÖSYM database</div>
-          </div>
-          <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-            <div className="flex items-center space-x-2 mb-2">
-              <AlertTriangle className="w-5 h-5 text-yellow-600" />
-              <div className="text-sm text-gray-900">Language Certificate</div>
-            </div>
-            <div className="text-xs text-gray-600">Requires YDYO verification</div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Decision Actions */}
-      <Card className="p-6">
-        <h2 className="text-gray-900 mb-4">Verification Decision</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Button 
-            className="h-auto py-4 flex flex-col items-center space-y-2"
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowReturnModal(true)}
+          >
+            Return
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-red-200 text-red-600 hover:bg-red-50"
+            onClick={() => setShowRejectModal(true)}
+          >
+            Reject
+          </Button>
+          <Button
+            size="sm"
             style={{ backgroundColor: '#C00000' }}
             onClick={handleVerify}
           >
-            <CheckCircle2 className="w-6 h-6" />
-            <div>
-              <div className="text-sm">Mark as Verified</div>
-              <div className="text-xs opacity-80">All documents authentic</div>
-            </div>
-          </Button>
-
-          <Button 
-            variant="outline"
-            className="h-auto py-4 flex flex-col items-center space-y-2"
-            onClick={() => setShowReturnModal(true)}
-          >
-            <Send className="w-6 h-6" />
-            <div>
-              <div className="text-sm">Return for Correction</div>
-              <div className="text-xs text-gray-500">Request document fixes</div>
-            </div>
-          </Button>
-
-          <Button 
-            variant="outline"
-            className="h-auto py-4 flex flex-col items-center space-y-2 border-red-300 text-red-600 hover:bg-red-50"
-            onClick={() => setShowRejectModal(true)}
-          >
-            <XCircle className="w-6 h-6" />
-            <div>
-              <div className="text-sm">Reject Application</div>
-              <div className="text-xs">Permanently reject</div>
-            </div>
+            Verify & Forward
           </Button>
         </div>
-      </Card>
+      </div>
 
-      {/* Verify Modal */}
+      {/* Main Content Area: Side-by-Side */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Side: Form Data */}
+        <div className="w-1/2 overflow-y-auto p-4 border-r bg-gray-50">
+          <div className="space-y-4">
+            {/* Student Info Card */}
+            <Card className="p-4">
+              <h3 className="text-sm font-bold mb-3 border-b pb-1">Student Information</h3>
+              <div className="grid grid-cols-2 gap-y-3 text-xs">
+                <div>
+                  <div className="text-gray-500">Full Name</div>
+                  <div className="font-medium">{appData.student.name}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500">TCKN</div>
+                  <div className="font-medium text-[#C00000]">{appData.student.tckn.substring(0, 2) + "*******" + appData.student.tckn.substring(9)}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500">Student ID</div>
+                  <div className="font-medium">{appData.student.studentId}</div>
+                </div>
+                <div>
+                  <div className="text-gray-500">GPA</div>
+                  <div className="font-medium">{appData.application.gpa}</div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Application Data Card */}
+            <Card className="p-4">
+              <h3 className="text-sm font-bold mb-3 border-b pb-1">Academic Details</h3>
+              <div className="space-y-3 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Current University</span>
+                  <span className="font-medium">{appData.application.currentUniversity}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Current Program</span>
+                  <span className="font-medium">{appData.application.currentProgram}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Target Program</span>
+                  <span className="font-medium font-bold text-blue-700">{appData.application.targetProgram}</span>
+                </div>
+                <div className="flex justify-between border-t pt-2">
+                  <span className="text-gray-500">ÖSYM Score</span>
+                  <span className="font-bold">{appData.application.osymScore}</span>
+                </div>
+              </div>
+            </Card>
+
+            {/* Document Checklist Card */}
+            <Card className="p-4">
+              <h3 className="text-sm font-bold mb-3 border-b pb-1">Documents Checklist</h3>
+              <div className="space-y-2">
+                {appData.documents.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className={`p-2 rounded-lg border cursor-pointer transition-colors ${selectedDoc?.id === doc.id ? 'border-[#C00000] bg-red-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                    onClick={() => setSelectedDoc(doc)}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center space-x-2">
+                        <FileText className={`w-4 h-4 ${selectedDoc?.id === doc.id ? 'text-[#C00000]' : 'text-gray-400'}`} />
+                        <span className="text-[11px] font-medium">{doc.name}</span>
+                      </div>
+                      {getEDevletBadge(doc.edevlet)}
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-gray-500">
+                      <span>Size: {doc.size}</span>
+                      <span className="flex items-center italic">
+                        {doc.status === 'verified' ? <CheckCircle2 className="w-3 h-3 mr-1 text-green-600" /> : <AlertTriangle className="w-3 h-3 mr-1 text-yellow-600" />}
+                        {doc.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        </div>
+
+        {/* Right Side: PDF Viewer Placeholder */}
+        <div className="w-1/2 flex flex-col bg-gray-200">
+          <div className="bg-gray-800 text-white p-2 text-xs flex justify-between items-center shrink-0">
+            <span>Viewing: {selectedDoc?.name || 'No document selected'}</span>
+            <div className="flex space-x-2">
+              <Button variant="secondary" size="sm" className="h-6 text-[10px] py-0 px-2"><ZoomIn className="w-3 h-3 mr-1"/>Zoom In</Button>
+              <Button variant="secondary" size="sm" className="h-6 text-[10px] py-0 px-2"><ZoomOut className="w-3 h-3 mr-1"/>Zoom Out</Button>
+              <Button variant="secondary" size="sm" className="h-6 text-[10px] py-0 px-2"><Download className="w-3 h-3 mr-1"/>Download</Button>
+            </div>
+          </div>
+          <div className="flex-1 flex items-center justify-center p-8 overflow-auto">
+            <div className="w-[595px] h-[842px] bg-white shadow-2xl flex flex-col p-12 shrink-0">
+              <div className="border-b-2 border-gray-900 pb-4 mb-8 flex justify-between items-start">
+                <div>
+                  <h1 className="text-xl font-serif font-bold uppercase">{selectedDoc?.name}</h1>
+                  <p className="text-sm font-serif">University Transfer Application Document</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-serif font-bold">DATE: 12/01/2025</p>
+                  <p className="text-xs font-serif font-bold">VERIFICATION ID: {Math.random().toString(36).substring(7).toUpperCase()}</p>
+                </div>
+              </div>
+
+              <div className="flex-1 space-y-6">
+                <div className="h-4 bg-gray-100 w-3/4"></div>
+                <div className="h-4 bg-gray-100 w-1/2"></div>
+                <div className="h-32 bg-gray-50 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 font-serif italic text-sm">
+                  Document Content Preview for {selectedDoc?.name}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div className="h-3 bg-gray-100 w-full"></div>
+                    <div className="h-3 bg-gray-100 w-full"></div>
+                    <div className="h-3 bg-gray-100 w-full"></div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-3 bg-gray-100 w-full"></div>
+                    <div className="h-3 bg-gray-100 w-full"></div>
+                    <div className="h-3 bg-gray-100 w-full"></div>
+                  </div>
+                </div>
+                <div className="mt-12 flex justify-end">
+                  <div className="w-32 h-32 border-2 border-blue-900 rounded-full flex items-center justify-center border-double rotate-12">
+                     <div className="text-center text-blue-900 font-bold text-[10px]">
+                        E-GOVERNMENT<br/>VERIFIED<br/>{new Date().toLocaleDateString()}
+                     </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-auto pt-8 border-t border-gray-200 text-[8px] text-gray-400 uppercase tracking-widest text-center">
+                This document was retrieved from the central university management system via secure TLS 1.3 connection.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modals from original code */}
       <Dialog open={showVerifyModal} onOpenChange={setShowVerifyModal}>
         <DialogContent>
           <DialogHeader>
@@ -312,7 +327,6 @@ export function IntakeVerification({ applicationId, onBack }: IntakeVerification
         </DialogContent>
       </Dialog>
 
-      {/* Return for Correction Modal */}
       <Dialog open={showReturnModal} onOpenChange={setShowReturnModal}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -364,7 +378,6 @@ export function IntakeVerification({ applicationId, onBack }: IntakeVerification
         </DialogContent>
       </Dialog>
 
-      {/* Reject Modal */}
       <Dialog open={showRejectModal} onOpenChange={setShowRejectModal}>
         <DialogContent>
           <DialogHeader>

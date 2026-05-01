@@ -80,15 +80,53 @@ interface LoginScreenProps {
   onLogin: (user: User) => void;
 }
 
+import { useEffect } from 'react';
+import { ForgotPasswordScreen } from './ForgotPasswordScreen';
+
 export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [tckn, setTckn] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [lockout, setLockout] = useState(false);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [remainingTime, setRemainingTime] = useState(0);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+
+  useEffect(() => {
+    const savedLockout = localStorage.getItem('lockoutUntil');
+    if (savedLockout) {
+      const until = parseInt(savedLockout, 10);
+      if (until > Date.now()) {
+        setLockoutUntil(until);
+      } else {
+        localStorage.removeItem('lockoutUntil');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    let interval: any;
+    if (lockoutUntil) {
+      interval = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((lockoutUntil - Date.now()) / 1000));
+        setRemainingTime(remaining);
+        if (remaining === 0) {
+          setLockoutUntil(null);
+          setFailedAttempts(0);
+          localStorage.removeItem('lockoutUntil');
+        }
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [lockoutUntil]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (lockoutUntil && Date.now() < lockoutUntil) {
+      return;
+    }
 
     // Validation
     if (!tckn || !password) {
@@ -104,13 +142,28 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     // Check credentials
     const userRecord = MOCK_USERS[tckn];
     if (!userRecord || userRecord.password !== password) {
-      setError('Invalid T.C. Identity Number or password.');
+      const newAttempts = failedAttempts + 1;
+      setFailedAttempts(newAttempts);
+
+      if (newAttempts >= 5) {
+        const until = Date.now() + 15 * 60 * 1000;
+        setLockoutUntil(until);
+        localStorage.setItem('lockoutUntil', until.toString());
+        setError('Too many failed attempts. Account locked for 15 minutes.');
+      } else {
+        setError(`Invalid T.C. Identity Number or password. Attempt ${newAttempts}/5`);
+      }
       return;
     }
 
     // Successful login
+    setFailedAttempts(0);
     onLogin(userRecord.user);
   };
+
+  if (showForgotPassword) {
+    return <ForgotPasswordScreen onBack={() => setShowForgotPassword(false)} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
@@ -139,11 +192,11 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               </Alert>
             )}
 
-            {lockout && (
+            {lockoutUntil && Date.now() < lockoutUntil && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Account locked due to multiple failed login attempts. Please contact support.
+                  Account locked. Please try again in {Math.floor(remainingTime / 60)}m {remainingTime % 60}s.
                 </AlertDescription>
               </Alert>
             )}
@@ -157,7 +210,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 value={tckn}
                 onChange={(e) => setTckn(e.target.value)}
                 maxLength={11}
-                disabled={lockout}
+                disabled={!!lockoutUntil && Date.now() < lockoutUntil}
               />
             </div>
 
@@ -169,7 +222,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                disabled={lockout}
+                disabled={!!lockoutUntil && Date.now() < lockoutUntil}
               />
             </div>
 
@@ -177,15 +230,20 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               type="submit" 
               className="w-full" 
               style={{ backgroundColor: '#C00000' }}
-              disabled={lockout}
+              disabled={!!lockoutUntil && Date.now() < lockoutUntil}
             >
               Login
             </Button>
 
             <div className="text-center">
-              <a href="#" className="text-sm" style={{ color: '#C00000' }}>
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="text-sm hover:underline"
+                style={{ color: '#C00000' }}
+              >
                 Forgot password?
-              </a>
+              </button>
             </div>
           </form>
 

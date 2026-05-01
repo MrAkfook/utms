@@ -1,0 +1,13 @@
+
+> @figma/my-make-file@0.0.1 dev /app
+> vite
+
+
+  VITE v6.3.5  ready in 361 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+10:13:04 PM [vite] (client) hmr update /src/app/components/LoginScreen.tsx, /src/styles/index.css
+10:13:26 PM [vite] (client) hmr update /src/app/components/student/ApplicationForm.tsx, /src/styles/index.css
+10:13:40 PM [vite] (client) hmr update /src/app/components/student/DocumentUpload.tsx, /src/styles/index.css
+10:14:22 PM [vite] (client) hmr update /src/app/components/oidb/IntakeVerification.tsx, /src/styles/index.css

@@ -7,9 +7,11 @@ import {
   Clock,
   ArrowLeft,
   FileText,
-  AlertTriangle
+  AlertTriangle,
+  Info
 } from 'lucide-react';
 import { Alert, AlertDescription } from '../ui/alert';
+import { useState } from 'react';
 
 interface FinalResultProps {
   applicationId: string;
@@ -65,6 +67,9 @@ export function FinalResult({ applicationId, onAppeal, onBack }: FinalResultProp
   const config = getResultConfig();
   const Icon = config.icon;
 
+  // Scenario 7: Even if email service fails (571-NOTIFY), result is still on portal
+  const [emailStatus, setEmailStatus] = useState<'sent' | 'error'>('error');
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -78,6 +83,16 @@ export function FinalResult({ applicationId, onAppeal, onBack }: FinalResultProp
           Back to Dashboard
         </Button>
       </div>
+
+      {emailStatus === 'error' && (
+        <Alert className="bg-blue-50 border-blue-200">
+          <Info className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800 text-xs">
+            <strong>Notification Notice:</strong> We encountered an issue sending your result email (Error: 571-NOTIFY).
+            However, your official result is published here in the portal.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Result Card */}
       <Card className={`p-8 border-2 ${config.borderColor} ${config.bgColor}`}>
@@ -126,7 +141,7 @@ export function FinalResult({ applicationId, onAppeal, onBack }: FinalResultProp
             </div>
             <div>
               <div className="text-sm text-gray-600">Final Score</div>
-              <div className="text-gray-900">87.5 / 100</div>
+              <div className="text-gray-900 font-mono">87.50000 / 100</div>
             </div>
           </div>
 
@@ -225,10 +240,10 @@ export function FinalResult({ applicationId, onAppeal, onBack }: FinalResultProp
           <div className="mt-4 pt-4 border-t border-gray-200 text-sm text-gray-600">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <strong>Total Credits Transferred:</strong> 15 credits
+                <strong>Total Credits Transferred:</strong> 15.00000 credits
               </div>
               <div>
-                <strong>Additional Credits Required:</strong> 1 credit
+                <strong>Additional Credits Required:</strong> 1.00000 credit
               </div>
               <div>
                 <strong>Starting Semester:</strong> 3rd Semester

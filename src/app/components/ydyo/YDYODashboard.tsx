@@ -23,7 +23,7 @@ interface YDYODashboardProps {
   onSwitchRole?: () => void;
 }
 
-type Section = 'dashboard' | 'queue' | 'decisions' | 'reports' | 'settings';
+type Section = 'dashboard';
 
 const MOCK_APPLICATIONS = [
   {

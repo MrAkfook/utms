@@ -30,7 +30,7 @@ interface OIDBDashboardProps {
 }
 
 type OIDBView = 'dashboard' | 'verify' | 'appeals' | 'pipeline';
-type Section = 'dashboard' | 'pipeline' | 'intake' | 'appeals' | 'reports' | 'settings';
+type Section = 'dashboard' | 'pipeline' | 'appeals';
 
 // Mock applications data
 const MOCK_APPLICATIONS = [
@@ -357,7 +357,14 @@ export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardPro
       currentSection={currentSection}
       onNavigate={(section) => {
         setCurrentSection(section as Section);
-        setCurrentView('dashboard');
+        if (section === 'dashboard') {
+          setCurrentView('dashboard');
+        } else if (section === 'pipeline') {
+          setCurrentView('pipeline');
+        } else if (section === 'appeals') {
+          setCurrentView('appeals');
+        }
+        setSelectedApp(null);
       }}
     >
       {renderDashboardContent()}

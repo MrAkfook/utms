@@ -15,7 +15,7 @@ interface BoardDashboardProps {
 }
 
 type BoardView = 'dashboard' | 'package-review';
-type Section = 'dashboard' | 'packages' | 'decisions' | 'reports';
+type Section = 'dashboard';
 
 // Mock packages for board review
 const MOCK_BOARD_PACKAGES = [

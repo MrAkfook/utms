@@ -26,7 +26,7 @@ interface AdminDashboardProps {
 }
 
 type AdminView = 'dashboard' | 'external-systems';
-type Section = 'dashboard' | 'users' | 'periods' | 'settings' | 'integrations' | 'monitoring';
+type Section = 'dashboard' | 'integrations';
 
 export function AdminDashboard({ user, onLogout, onSwitchRole }: AdminDashboardProps) {
   const [currentSection, setCurrentSection] = useState<Section>('dashboard');
@@ -217,7 +217,11 @@ export function AdminDashboard({ user, onLogout, onSwitchRole }: AdminDashboardP
       currentSection={currentSection}
       onNavigate={(section) => {
         setCurrentSection(section as Section);
-        setCurrentView('dashboard');
+        if (section === 'dashboard') {
+          setCurrentView('dashboard');
+        } else if (section === 'integrations') {
+          setCurrentView('external-systems');
+        }
       }}
     >
       {renderDashboardContent()}

@@ -30,54 +30,31 @@ interface AppShellProps {
 
 const NAVIGATION_ITEMS: Record<UserRole, { icon: React.ElementType; label: string; section: string }[]> = {
   Student: [
-    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' },
-    { icon: FileText, label: 'Başvurularım', section: 'applications' },
-    { icon: Eye, label: 'Süreç Takibi', section: 'track' },
-    { icon: Settings, label: 'Ayarlar', section: 'settings' }
+    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' }
   ],
   OIDB: [
     { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' },
     { icon: List, label: 'Süreç Takibi', section: 'pipeline' },
-    { icon: FileText, label: 'Başvuru Kuyruğu', section: 'intake' },
-    { icon: Eye, label: 'İtirazlar', section: 'appeals' },
-    { icon: BarChart3, label: 'Raporlar', section: 'reports' },
-    { icon: Settings, label: 'Ayarlar', section: 'settings' }
+    { icon: Eye, label: 'İtirazlar', section: 'appeals' }
   ],
   YDYO: [
-    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' },
-    { icon: List, label: 'İnceleme Kuyruğu', section: 'queue' },
-    { icon: FileText, label: 'Kararlar', section: 'decisions' },
-    { icon: BarChart3, label: 'Raporlar', section: 'reports' },
-    { icon: Settings, label: 'Ayarlar', section: 'settings' }
+    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' }
   ],
   YGK: [
     { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' },
-    { icon: List, label: 'Aday Listesi', section: 'applicants' },
     { icon: Eye, label: 'Değerlendirmeler', section: 'evaluations' },
     { icon: BarChart3, label: 'Sıralamalar', section: 'rankings' },
-    { icon: FileText, label: 'İntibak İşlemleri', section: 'intibak' },
-    { icon: Settings, label: 'Ayarlar', section: 'settings' }
+    { icon: FileText, label: 'İntibak İşlemleri', section: 'intibak' }
   ],
   Dean: [
-    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' },
-    { icon: List, label: 'Paketler', section: 'packages' },
-    { icon: Eye, label: 'İnceleme', section: 'review' },
-    { icon: BarChart3, label: 'Raporlar', section: 'reports' },
-    { icon: Settings, label: 'Ayarlar', section: 'settings' }
+    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' }
   ],
   Board: [
-    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' },
-    { icon: List, label: 'Bekleyen Paketler', section: 'packages' },
-    { icon: Eye, label: 'Kararlar', section: 'decisions' },
-    { icon: BarChart3, label: 'Raporlar', section: 'reports' }
+    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' }
   ],
   Admin: [
     { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' },
-    { icon: FileText, label: 'Kullanıcı & Rol', section: 'users' },
-    { icon: List, label: 'Dönem & Kontenjan', section: 'periods' },
-    { icon: Settings, label: 'Sistem Ayarları', section: 'settings' },
-    { icon: Eye, label: 'Entegrasyonlar', section: 'integrations' },
-    { icon: BarChart3, label: 'İzleme', section: 'monitoring' }
+    { icon: Eye, label: 'Entegrasyonlar', section: 'integrations' }
   ]
 };
 

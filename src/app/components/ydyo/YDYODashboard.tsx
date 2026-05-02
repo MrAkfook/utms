@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Layout } from '../Layout';
+import { AppShell } from '../AppShell';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -11,7 +11,8 @@ import {
   XCircle,
   Eye,
   Filter,
-  Search
+  Search,
+  ArrowLeft
 } from 'lucide-react';
 import type { User } from '../../App';
 import { LanguageReviewDetail } from './LanguageReviewDetail';
@@ -21,6 +22,8 @@ interface YDYODashboardProps {
   onLogout: () => void;
   onSwitchRole?: () => void;
 }
+
+type Section = 'dashboard' | 'queue' | 'decisions' | 'reports' | 'settings';
 
 const MOCK_APPLICATIONS = [
   {
@@ -76,6 +79,7 @@ const MOCK_APPLICATIONS = [
 ];
 
 export function YDYODashboard({ user, onLogout, onSwitchRole }: YDYODashboardProps) {
+  const [currentSection, setCurrentSection] = useState<Section>('dashboard');
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -88,42 +92,42 @@ export function YDYODashboard({ user, onLogout, onSwitchRole }: YDYODashboardPro
     setSelectedAppId(null);
   };
 
-  // If an application is selected, show the detail view
-  if (selectedAppId) {
+  const renderDashboardContent = () => {
+    if (selectedAppId) {
+      return (
+        <div className="space-y-4">
+          <Button variant="ghost" onClick={handleBackToQueue} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Geri Dön
+          </Button>
+          <LanguageReviewDetail
+            applicationId={selectedAppId}
+            onBack={handleBackToQueue}
+          />
+        </div>
+      );
+    }
+
+    const pendingCount = MOCK_APPLICATIONS.filter(a => a.status === 'pending').length;
+    const successfulCount = MOCK_APPLICATIONS.filter(a => a.status === 'successful').length;
+    const unsuccessfulCount = MOCK_APPLICATIONS.filter(a => a.status === 'unsuccessful').length;
+    const exemptCount = MOCK_APPLICATIONS.filter(a => a.status === 'exempt').length;
+
+    const filteredApplications = MOCK_APPLICATIONS.filter(app => {
+      const matchesSearch = searchQuery === '' ||
+        app.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.program.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+
     return (
-      <Layout user={user} currentRole="YDYO" onLogout={onLogout} onSwitchRole={onSwitchRole}>
-        <LanguageReviewDetail 
-          applicationId={selectedAppId}
-          onBack={handleBackToQueue}
-        />
-      </Layout>
-    );
-  }
-
-  const pendingCount = MOCK_APPLICATIONS.filter(a => a.status === 'pending').length;
-  const successfulCount = MOCK_APPLICATIONS.filter(a => a.status === 'successful').length;
-  const unsuccessfulCount = MOCK_APPLICATIONS.filter(a => a.status === 'unsuccessful').length;
-  const exemptCount = MOCK_APPLICATIONS.filter(a => a.status === 'exempt').length;
-
-  // Filter applications
-  const filteredApplications = MOCK_APPLICATIONS.filter(app => {
-    const matchesSearch = searchQuery === '' || 
-      app.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.program.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
-
-  return (
-    <Layout user={user} currentRole="YDYO" onLogout={onLogout} onSwitchRole={onSwitchRole}>
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-gray-900 mb-2">YDYO Dashboard</h1>
-          <p className="text-gray-600">Foreign Languages Office - Language Proficiency Evaluation</p>
+          <h1 className="text-gray-900 mb-2">YDYO Memur Paneli</h1>
+          <p className="text-gray-600">Yabancı Diller Yüksekokulu - Dil Yeterlilik Değerlendirmesi</p>
         </div>
 
         {/* Statistics */}
@@ -131,7 +135,7 @@ export function YDYODashboard({ user, onLogout, onSwitchRole }: YDYODashboardPro
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Pending Review</div>
+                <div className="text-sm text-gray-600 mb-1">İnceleme Bekleyen</div>
                 <div className="text-2xl text-gray-900">{pendingCount}</div>
               </div>
               <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
@@ -143,7 +147,7 @@ export function YDYODashboard({ user, onLogout, onSwitchRole }: YDYODashboardPro
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Successful</div>
+                <div className="text-sm text-gray-600 mb-1">Başarılı</div>
                 <div className="text-2xl text-gray-900">{successfulCount}</div>
               </div>
               <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -155,7 +159,7 @@ export function YDYODashboard({ user, onLogout, onSwitchRole }: YDYODashboardPro
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Exempt</div>
+                <div className="text-sm text-gray-600 mb-1">Muaf</div>
                 <div className="text-2xl text-gray-900">{exemptCount}</div>
               </div>
               <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
@@ -167,7 +171,7 @@ export function YDYODashboard({ user, onLogout, onSwitchRole }: YDYODashboardPro
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Unsuccessful</div>
+                <div className="text-sm text-gray-600 mb-1">Başarısız</div>
                 <div className="text-2xl text-gray-900">{unsuccessfulCount}</div>
               </div>
               <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
@@ -179,7 +183,7 @@ export function YDYODashboard({ user, onLogout, onSwitchRole }: YDYODashboardPro
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Total</div>
+                <div className="text-sm text-gray-600 mb-1">Toplam</div>
                 <div className="text-2xl text-gray-900">{MOCK_APPLICATIONS.length}</div>
               </div>
               <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C00000' }}>
@@ -189,59 +193,56 @@ export function YDYODashboard({ user, onLogout, onSwitchRole }: YDYODashboardPro
           </Card>
         </div>
 
-        {/* Language Requirement Guidelines */}
+        {/* Guidelines */}
         <Card className="p-6">
-          <h2 className="text-gray-900 mb-4">Language Proficiency Requirements</h2>
+          <h2 className="text-gray-900 mb-4">Dil Yeterlilik Kriterleri</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-gray-50 rounded-lg">
               <div className="text-sm text-gray-900 mb-2">TOEFL iBT</div>
-              <div className="text-xs text-gray-600">Minimum Score: 79</div>
-              <div className="text-xs text-gray-600">Exempt: ≥ 90 (+5 bonus)</div>
-              <div className="text-xs text-gray-500 mt-1">Valid for 2 years</div>
+              <div className="text-xs text-gray-600">Minimum Puan: 79</div>
+              <div className="text-xs text-gray-600">Muafiyet: ≥ 90 (+5 bonus)</div>
+              <div className="text-xs text-gray-500 mt-1">Geçerlilik: 2 yıl</div>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
               <div className="text-sm text-gray-900 mb-2">IELTS Academic</div>
-              <div className="text-xs text-gray-600">Minimum Score: 6.0</div>
-              <div className="text-xs text-gray-600">Exempt: ≥ 7.0 (+5 bonus)</div>
-              <div className="text-xs text-gray-500 mt-1">Valid for 2 years</div>
+              <div className="text-xs text-gray-600">Minimum Puan: 6.0</div>
+              <div className="text-xs text-gray-600">Muafiyet: ≥ 7.0 (+5 bonus)</div>
+              <div className="text-xs text-gray-500 mt-1">Geçerlilik: 2 yıl</div>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
               <div className="text-sm text-gray-900 mb-2">YDS</div>
-              <div className="text-xs text-gray-600">Minimum Score: 70</div>
-              <div className="text-xs text-gray-600">Exempt: ≥ 85 (+5 bonus)</div>
-              <div className="text-xs text-gray-500 mt-1">Valid for 5 years</div>
+              <div className="text-xs text-gray-600">Minimum Puan: 70</div>
+              <div className="text-xs text-gray-600">Muafiyet: ≥ 85 (+5 bonus)</div>
+              <div className="text-xs text-gray-500 mt-1">Geçerlilik: 5 yıl</div>
             </div>
           </div>
         </Card>
 
-        {/* Applications Table */}
+        {/* Table */}
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-gray-900">Language Evaluation Queue</h2>
+            <h2 className="text-gray-900">Değerlendirme Kuyruğu</h2>
             <div className="flex items-center space-x-3">
-              {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   type="text"
-                  placeholder="Search applications..."
+                  placeholder="Başvuru ara..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 w-64"
                 />
               </div>
-              
-              {/* Status Filter */}
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm"
               >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="successful">Successful</option>
-                <option value="exempt">Exempt</option>
-                <option value="unsuccessful">Unsuccessful</option>
+                <option value="all">Tüm Durumlar</option>
+                <option value="pending">Bekliyor</option>
+                <option value="successful">Başarılı</option>
+                <option value="exempt">Muaf</option>
+                <option value="unsuccessful">Başarısız</option>
               </select>
             </div>
           </div>
@@ -250,21 +251,21 @@ export function YDYODashboard({ user, onLogout, onSwitchRole }: YDYODashboardPro
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm text-gray-700">Application ID</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700">Student</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Başvuru ID</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Öğrenci</th>
                   <th className="text-left py-3 px-4 text-sm text-gray-700">Program</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700">Language Document</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700">Score</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700">Submitted</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700">Status</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700">Actions</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Dil Belgesi</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Puan</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Tarih</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Durum</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">İşlemler</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredApplications.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="py-8 text-center text-gray-500">
-                      No applications found matching your criteria
+                      Kriterlere uygun başvuru bulunamadı
                     </td>
                   </tr>
                 ) : (
@@ -277,18 +278,10 @@ export function YDYODashboard({ user, onLogout, onSwitchRole }: YDYODashboardPro
                       <td className="py-3 px-4 text-sm text-gray-900">{app.score}</td>
                       <td className="py-3 px-4 text-sm text-gray-600">{app.submittedDate}</td>
                       <td className="py-3 px-4">
-                        {app.status === 'pending' && (
-                          <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
-                        )}
-                        {app.status === 'successful' && (
-                          <Badge className="bg-green-100 text-green-800">Successful</Badge>
-                        )}
-                        {app.status === 'exempt' && (
-                          <Badge className="bg-blue-100 text-blue-800">Exempt</Badge>
-                        )}
-                        {app.status === 'unsuccessful' && (
-                          <Badge className="bg-red-100 text-red-800">Unsuccessful</Badge>
-                        )}
+                        {app.status === 'pending' && <Badge className="bg-yellow-100 text-yellow-800">Bekliyor</Badge>}
+                        {app.status === 'successful' && <Badge className="bg-green-100 text-green-800">Başarılı</Badge>}
+                        {app.status === 'exempt' && <Badge className="bg-blue-100 text-blue-800">Muaf</Badge>}
+                        {app.status === 'unsuccessful' && <Badge className="bg-red-100 text-red-800">Başarısız</Badge>}
                       </td>
                       <td className="py-3 px-4">
                         <Button 
@@ -297,7 +290,7 @@ export function YDYODashboard({ user, onLogout, onSwitchRole }: YDYODashboardPro
                           onClick={() => handleReview(app.id)}
                         >
                           <Eye className="w-4 h-4 mr-1" />
-                          Review
+                          İncele
                         </Button>
                       </td>
                     </tr>
@@ -308,6 +301,22 @@ export function YDYODashboard({ user, onLogout, onSwitchRole }: YDYODashboardPro
           </div>
         </Card>
       </div>
-    </Layout>
+    );
+  };
+
+  return (
+    <AppShell
+      user={user}
+      currentRole="YDYO"
+      onLogout={onLogout}
+      onSwitchRole={onSwitchRole}
+      currentSection={currentSection}
+      onNavigate={(section) => {
+        setCurrentSection(section as Section);
+        setSelectedAppId(null);
+      }}
+    >
+      {renderDashboardContent()}
+    </AppShell>
   );
 }

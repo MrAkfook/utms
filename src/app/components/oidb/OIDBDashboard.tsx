@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Layout } from '../Layout';
+import { AppShell } from '../AppShell';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -15,7 +15,8 @@ import {
   Eye,
   Send,
   AlertTriangle,
-  BarChart3
+  BarChart3,
+  ArrowLeft
 } from 'lucide-react';
 import type { User } from '../../App';
 import { IntakeVerification } from './IntakeVerification';
@@ -29,6 +30,7 @@ interface OIDBDashboardProps {
 }
 
 type OIDBView = 'dashboard' | 'verify' | 'appeals' | 'pipeline';
+type Section = 'dashboard' | 'pipeline' | 'intake' | 'appeals' | 'reports' | 'settings';
 
 // Mock applications data
 const MOCK_APPLICATIONS = [
@@ -71,6 +73,7 @@ const MOCK_APPLICATIONS = [
 ];
 
 export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardProps) {
+  const [currentSection, setCurrentSection] = useState<Section>('dashboard');
   const [currentView, setCurrentView] = useState<OIDBView>('dashboard');
   const [selectedApp, setSelectedApp] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -81,60 +84,72 @@ export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardPro
     setCurrentView('verify');
   };
 
-  if (currentView === 'verify' && selectedApp) {
+  const renderDashboardContent = () => {
+    if (currentView === 'verify' && selectedApp) {
+      return (
+        <div className="space-y-4">
+          <Button variant="ghost" onClick={() => setCurrentView('dashboard')} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Geri Dön
+          </Button>
+          <IntakeVerification
+            applicationId={selectedApp}
+            onBack={() => setCurrentView('dashboard')}
+          />
+        </div>
+      );
+    }
+
+    if (currentView === 'appeals' || currentSection === 'appeals') {
+      return (
+        <div className="space-y-4">
+          <Button variant="ghost" onClick={() => { setCurrentView('dashboard'); setCurrentSection('dashboard'); }} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Geri Dön
+          </Button>
+          <ReviewAppeals onBack={() => { setCurrentView('dashboard'); setCurrentSection('dashboard'); }} />
+        </div>
+      );
+    }
+
+    if (currentView === 'pipeline' || currentSection === 'pipeline') {
+      return (
+        <div className="space-y-4">
+          <Button variant="ghost" onClick={() => { setCurrentView('dashboard'); setCurrentSection('dashboard'); }} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Geri Dön
+          </Button>
+          <PipelineView
+            onBack={() => { setCurrentView('dashboard'); setCurrentSection('dashboard'); }}
+            onViewApplication={(appId) => {
+              setSelectedApp(appId);
+              setCurrentView('verify');
+            }}
+          />
+        </div>
+      );
+    }
+
+    // Default Dashboard View
+    const filteredApps = MOCK_APPLICATIONS.filter(app => {
+      const matchesStatus = filterStatus === 'all' || app.status === filterStatus;
+      const matchesSearch = searchQuery === '' ||
+        app.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.tckn.includes(searchQuery);
+      return matchesStatus && matchesSearch;
+    });
+
+    const pendingCount = MOCK_APPLICATIONS.filter(a => a.status === 'pending_verification').length;
+    const verifiedCount = MOCK_APPLICATIONS.filter(a => a.status === 'verified').length;
+    const returnedCount = MOCK_APPLICATIONS.filter(a => a.status === 'returned').length;
+
     return (
-      <Layout user={user} currentRole="OIDB" onLogout={onLogout} onSwitchRole={onSwitchRole}>
-        <IntakeVerification 
-          applicationId={selectedApp}
-          onBack={() => setCurrentView('dashboard')}
-        />
-      </Layout>
-    );
-  }
-
-  if (currentView === 'appeals') {
-    return (
-      <Layout user={user} currentRole="OIDB" onLogout={onLogout} onSwitchRole={onSwitchRole}>
-        <ReviewAppeals onBack={() => setCurrentView('dashboard')} />
-      </Layout>
-    );
-  }
-
-  if (currentView === 'pipeline') {
-    return (
-      <Layout user={user} currentRole="OIDB" onLogout={onLogout} onSwitchRole={onSwitchRole}>
-        <PipelineView 
-          onBack={() => setCurrentView('dashboard')} 
-          onViewApplication={(appId) => {
-            setSelectedApp(appId);
-            setCurrentView('verify');
-          }}
-        />
-      </Layout>
-    );
-  }
-
-  // Filter applications
-  const filteredApps = MOCK_APPLICATIONS.filter(app => {
-    const matchesStatus = filterStatus === 'all' || app.status === filterStatus;
-    const matchesSearch = searchQuery === '' || 
-      app.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.tckn.includes(searchQuery);
-    return matchesStatus && matchesSearch;
-  });
-
-  const pendingCount = MOCK_APPLICATIONS.filter(a => a.status === 'pending_verification').length;
-  const verifiedCount = MOCK_APPLICATIONS.filter(a => a.status === 'verified').length;
-  const returnedCount = MOCK_APPLICATIONS.filter(a => a.status === 'returned').length;
-
-  return (
-    <Layout user={user} currentRole="OIDB" onLogout={onLogout} onSwitchRole={onSwitchRole}>
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-gray-900 mb-2">ÖİDB Officer Dashboard</h1>
-          <p className="text-gray-600">Student Affairs Office - Application Management</p>
+          <h1 className="text-gray-900 mb-2">ÖİDB Memur Paneli</h1>
+          <p className="text-gray-600">Öğrenci İşleri Daire Başkanlığı - Başvuru Yönetimi</p>
         </div>
 
         {/* Statistics Cards */}
@@ -142,7 +157,7 @@ export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardPro
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Pending Verification</div>
+                <div className="text-sm text-gray-600 mb-1">Onay Bekleyen</div>
                 <div className="text-2xl text-gray-900">{pendingCount}</div>
               </div>
               <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
@@ -154,7 +169,7 @@ export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardPro
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Verified</div>
+                <div className="text-sm text-gray-600 mb-1">Onaylanan</div>
                 <div className="text-2xl text-gray-900">{verifiedCount}</div>
               </div>
               <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -166,7 +181,7 @@ export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardPro
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Returned</div>
+                <div className="text-sm text-gray-600 mb-1">İade Edilen</div>
                 <div className="text-2xl text-gray-900">{returnedCount}</div>
               </div>
               <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
@@ -178,7 +193,7 @@ export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardPro
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Total Applications</div>
+                <div className="text-sm text-gray-600 mb-1">Toplam Başvuru</div>
                 <div className="text-2xl text-gray-900">{MOCK_APPLICATIONS.length}</div>
               </div>
               <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C00000' }}>
@@ -197,8 +212,8 @@ export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardPro
           >
             <Clock className="w-5 h-5 mr-3" />
             <div className="text-left">
-              <div className="text-sm">Review Pending Applications</div>
-              <div className="text-xs text-gray-500 mt-1">{pendingCount} applications awaiting verification</div>
+              <div className="text-sm">Bekleyenleri İncele</div>
+              <div className="text-xs text-gray-500 mt-1">{pendingCount} başvuru onay bekliyor</div>
             </div>
           </Button>
 
@@ -209,8 +224,8 @@ export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardPro
           >
             <AlertTriangle className="w-5 h-5 mr-3" />
             <div className="text-left">
-              <div className="text-sm">Review Appeals</div>
-              <div className="text-xs text-gray-500 mt-1">3 appeals pending review</div>
+              <div className="text-sm">İtirazları İncele</div>
+              <div className="text-xs text-gray-500 mt-1">3 itiraz inceleme bekliyor</div>
             </div>
           </Button>
 
@@ -221,8 +236,8 @@ export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardPro
           >
             <BarChart3 className="w-5 h-5 mr-3" />
             <div className="text-left">
-              <div className="text-sm">View Pipeline</div>
-              <div className="text-xs text-gray-500 mt-1">Track applications across stages</div>
+              <div className="text-sm">Süreç Takibi</div>
+              <div className="text-xs text-gray-500 mt-1">Tüm aşamalardaki başvuruları gör</div>
             </div>
           </Button>
 
@@ -232,8 +247,8 @@ export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardPro
           >
             <Send className="w-5 h-5 mr-3" />
             <div className="text-left">
-              <div className="text-sm">Forward to YDYO</div>
-              <div className="text-xs text-gray-500 mt-1">Send for language review</div>
+              <div className="text-sm">YDYO'ya Gönder</div>
+              <div className="text-xs text-gray-500 mt-1">Dil yeterlilik onayı için</div>
             </div>
           </Button>
         </div>
@@ -245,7 +260,7 @@ export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardPro
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
-                  placeholder="Search by Application ID, Name, or TCKN..."
+                  placeholder="Başvuru ID, İsim veya TCKN ile ara..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -256,13 +271,13 @@ export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardPro
               <Select value={filterStatus} onValueChange={setFilterStatus}>
                 <SelectTrigger>
                   <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Filter by status" />
+                  <SelectValue placeholder="Duruma göre filtrele" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Applications</SelectItem>
-                  <SelectItem value="pending_verification">Pending Verification</SelectItem>
-                  <SelectItem value="verified">Verified</SelectItem>
-                  <SelectItem value="returned">Returned</SelectItem>
+                  <SelectItem value="all">Tüm Başvurular</SelectItem>
+                  <SelectItem value="pending_verification">Onay Bekleyen</SelectItem>
+                  <SelectItem value="verified">Onaylanan</SelectItem>
+                  <SelectItem value="returned">İade Edilen</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -271,18 +286,18 @@ export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardPro
 
         {/* Applications Table */}
         <Card className="p-6">
-          <h2 className="text-gray-900 mb-4">Applications Queue</h2>
+          <h2 className="text-gray-900 mb-4">Başvuru Kuyruğu</h2>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm text-gray-700">Application ID</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700">Student</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Başvuru ID</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Öğrenci</th>
                   <th className="text-left py-3 px-4 text-sm text-gray-700">Program</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700">Submitted</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700">Status</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700">Documents</th>
-                  <th className="text-left py-3 px-4 text-sm text-gray-700">Actions</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Başvuru Tarihi</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Durum</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Belgeler</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">İşlemler</th>
                 </tr>
               </thead>
               <tbody>
@@ -291,26 +306,26 @@ export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardPro
                     <td className="py-3 px-4 text-sm text-gray-900">{app.id}</td>
                     <td className="py-3 px-4">
                       <div className="text-sm text-gray-900">{app.studentName}</div>
-                      <div className="text-xs text-gray-500">{app.tckn}</div>
+                      <div className="text-xs text-gray-500">{app.tckn.replace(/(\d{3})\d{5}(\d{3})/, '$1*****$2')}</div>
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-600">{app.program}</td>
                     <td className="py-3 px-4 text-sm text-gray-600">{app.submittedDate}</td>
                     <td className="py-3 px-4">
                       {app.status === 'pending_verification' && (
-                        <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+                        <Badge className="bg-yellow-100 text-yellow-800">Bekliyor</Badge>
                       )}
                       {app.status === 'verified' && (
-                        <Badge className="bg-green-100 text-green-800">Verified</Badge>
+                        <Badge className="bg-green-100 text-green-800">Onaylandı</Badge>
                       )}
                       {app.status === 'returned' && (
-                        <Badge className="bg-red-100 text-red-800">Returned</Badge>
+                        <Badge className="bg-red-100 text-red-800">İade Edildi</Badge>
                       )}
                     </td>
                     <td className="py-3 px-4">
                       {app.documentsComplete ? (
-                        <Badge className="bg-green-100 text-green-800">Complete</Badge>
+                        <Badge className="bg-green-100 text-green-800">Tamam</Badge>
                       ) : (
-                        <Badge className="bg-red-100 text-red-800">Incomplete</Badge>
+                        <Badge className="bg-red-100 text-red-800">Eksik</Badge>
                       )}
                     </td>
                     <td className="py-3 px-4">
@@ -320,7 +335,7 @@ export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardPro
                         onClick={() => handleVerifyApp(app.id)}
                       >
                         <Eye className="w-4 h-4 mr-1" />
-                        Review
+                        İncele
                       </Button>
                     </td>
                   </tr>
@@ -330,6 +345,22 @@ export function OIDBDashboard({ user, onLogout, onSwitchRole }: OIDBDashboardPro
           </div>
         </Card>
       </div>
-    </Layout>
+    );
+  }
+
+  return (
+    <AppShell
+      user={user}
+      currentRole="OIDB"
+      onLogout={onLogout}
+      onSwitchRole={onSwitchRole}
+      currentSection={currentSection}
+      onNavigate={(section) => {
+        setCurrentSection(section as Section);
+        setCurrentView('dashboard');
+      }}
+    >
+      {renderDashboardContent()}
+    </AppShell>
   );
 }

@@ -17,10 +17,10 @@ const MOCK_APPEALS = [
     id: 'APPEAL-2025-001',
     applicationId: 'APP-2025-001240',
     studentName: 'Can Öztürk',
-    program: 'Electrical Engineering',
-    originalDecision: 'Rejected',
+    program: 'Elektrik-Elektronik Mühendisliği',
+    originalDecision: 'Reddedildi',
     appealDate: '2025-02-03',
-    appealReason: 'I believe there was an error in the GPA calculation. My official transcript shows a GPA of 2.85, which meets the minimum requirement of 2.50. However, my application was rejected citing insufficient GPA. I have attached an updated official transcript for verification.',
+    appealReason: 'GNO hesaplamasında bir hata olduğunu düşünüyorum. Resmi transkriptim 2.85 GNO göstermektedir, bu da 2.50 olan minimum gereksinimi karşılamaktadır. Ancak başvurum yetersiz GNO gerekçesiyle reddedildi. Doğrulama için güncel resmi transkriptimi ekledim.',
     status: 'pending',
     supportingDoc: true
   },
@@ -28,10 +28,10 @@ const MOCK_APPEALS = [
     id: 'APPEAL-2025-002',
     applicationId: 'APP-2025-001245',
     studentName: 'Elif Yıldız',
-    program: 'Computer Engineering',
-    originalDecision: 'Rejected',
+    program: 'Bilgisayar Mühendisliği',
+    originalDecision: 'Reddedildi',
     appealDate: '2025-02-04',
-    appealReason: 'My TOEFL certificate was not considered in the evaluation. I submitted a valid TOEFL iBT score of 88, which should exempt me from the language proficiency test. The rejection letter states language requirements were not met, but I believe this is an oversight.',
+    appealReason: 'Değerlendirmede TOEFL belgem dikkate alınmamış. 88 puanlık geçerli bir TOEFL iBT sonucum var, bu da beni dil yeterlilik sınavından muaf tutmalı. Red mektubunda dil gereksinimlerinin karşılanmadığı belirtilmiş, ancak bunun bir gözden kaçırma olduğuna inanıyorum.',
     status: 'pending',
     supportingDoc: true
   },
@@ -39,13 +39,13 @@ const MOCK_APPEALS = [
     id: 'APPEAL-2025-003',
     applicationId: 'APP-2025-001238',
     studentName: 'Burak Demir',
-    program: 'Mechanical Engineering',
-    originalDecision: 'Waitlisted',
+    program: 'Makine Mühendisliği',
+    originalDecision: 'Yedek',
     appealDate: '2025-02-02',
-    appealReason: 'I was placed on the waitlist, but I believe my course equivalences were not properly evaluated. Several of my completed courses align directly with the curriculum requirements and should have resulted in a higher ranking score.',
+    appealReason: 'Yedek listesine alındım ancak ders muafiyetlerimin (intibak) doğru değerlendirilmediğini düşünüyorum. Tamamladığım birkaç ders doğrudan müfredat gereksinimleriyle örtüşüyor ve daha yüksek bir sıralama puanı ile sonuçlanmalıydı.',
     status: 'approved',
     supportingDoc: false,
-    reviewNote: 'Appeal approved. Course equivalences re-evaluated. Student moved to admitted list.'
+    reviewNote: 'İtiraz haklı bulundu. Ders muafiyetleri yeniden değerlendirildi. Öğrenci asil listeye taşındı.'
   }
 ];
 
@@ -80,12 +80,12 @@ export function ReviewAppeals({ onBack }: ReviewAppealsProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-gray-900 mb-2">Review Appeals</h1>
-          <p className="text-gray-600">{pendingAppeals.length} appeals pending review</p>
+          <h1 className="text-gray-900 mb-2">İtirazları Değerlendir</h1>
+          <p className="text-gray-600">{pendingAppeals.length} itiraz inceleme bekliyor</p>
         </div>
         <Button variant="outline" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dashboard
+          Panele Geri Dön
         </Button>
       </div>
 
@@ -100,22 +100,22 @@ export function ReviewAppeals({ onBack }: ReviewAppealsProps) {
                   <div className="flex items-center space-x-3 mb-2">
                     <h3 className="text-gray-900">{appeal.studentName}</h3>
                     {appeal.status === 'pending' && (
-                      <Badge className="bg-yellow-100 text-yellow-800">Pending Review</Badge>
+                      <Badge className="bg-yellow-100 text-yellow-800">İnceleme Bekliyor</Badge>
                     )}
                     {appeal.status === 'approved' && (
-                      <Badge className="bg-green-100 text-green-800">Approved</Badge>
+                      <Badge className="bg-green-100 text-green-800">Kabul Edildi</Badge>
                     )}
                     {appeal.status === 'rejected' && (
-                      <Badge className="bg-red-100 text-red-800">Rejected</Badge>
+                      <Badge className="bg-red-100 text-red-800">Reddedildi</Badge>
                     )}
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <div className="text-gray-600">Appeal ID</div>
+                      <div className="text-gray-600">İtiraz ID</div>
                       <div className="text-gray-900">{appeal.id}</div>
                     </div>
                     <div>
-                      <div className="text-gray-600">Application ID</div>
+                      <div className="text-gray-600">Başvuru ID</div>
                       <div className="text-gray-900">{appeal.applicationId}</div>
                     </div>
                     <div>
@@ -123,16 +123,16 @@ export function ReviewAppeals({ onBack }: ReviewAppealsProps) {
                       <div className="text-gray-900">{appeal.program}</div>
                     </div>
                     <div>
-                      <div className="text-gray-600">Original Decision</div>
+                      <div className="text-gray-600">Orijinal Karar</div>
                       <div className="text-red-600">{appeal.originalDecision}</div>
                     </div>
                     <div>
-                      <div className="text-gray-600">Appeal Date</div>
+                      <div className="text-gray-600">İtiraz Tarihi</div>
                       <div className="text-gray-900">{appeal.appealDate}</div>
                     </div>
                     <div>
-                      <div className="text-gray-600">Supporting Docs</div>
-                      <div className="text-gray-900">{appeal.supportingDoc ? 'Yes' : 'No'}</div>
+                      <div className="text-gray-600">Ek Belgeler</div>
+                      <div className="text-gray-900">{appeal.supportingDoc ? 'Var' : 'Yok'}</div>
                     </div>
                   </div>
                 </div>
@@ -140,7 +140,7 @@ export function ReviewAppeals({ onBack }: ReviewAppealsProps) {
 
               {/* Appeal Reason */}
               <div>
-                <div className="text-sm text-gray-600 mb-2">Appeal Reason:</div>
+                <div className="text-sm text-gray-600 mb-2">İtiraz Nedeni:</div>
                 <div className="p-4 bg-gray-50 rounded-lg text-sm text-gray-900">
                   {appeal.appealReason}
                 </div>
@@ -151,15 +151,15 @@ export function ReviewAppeals({ onBack }: ReviewAppealsProps) {
                 <div>
                   <Button size="sm" variant="outline">
                     <FileText className="w-4 h-4 mr-2" />
-                    View Supporting Document
+                    Destekleyici Belgeyi Görüntüle
                   </Button>
                 </div>
               )}
 
-              {/* Review Note (if reviewed) */}
+              {/* Review Note */}
               {appeal.status !== 'pending' && appeal.reviewNote && (
                 <div>
-                  <div className="text-sm text-gray-600 mb-2">Review Note:</div>
+                  <div className="text-sm text-gray-600 mb-2">Değerlendirme Notu:</div>
                   <div className="p-4 bg-blue-50 rounded-lg text-sm text-gray-900 border border-blue-200">
                     {appeal.reviewNote}
                   </div>
@@ -174,7 +174,7 @@ export function ReviewAppeals({ onBack }: ReviewAppealsProps) {
                     variant="outline"
                   >
                     <Eye className="w-4 h-4 mr-2" />
-                    View Original Application
+                    Orijinal Başvuruyu Gör
                   </Button>
                   <div className="flex-1"></div>
                   <Button 
@@ -184,7 +184,7 @@ export function ReviewAppeals({ onBack }: ReviewAppealsProps) {
                     onClick={() => handleDecision(appeal.id, 'reject')}
                   >
                     <XCircle className="w-4 h-4 mr-2" />
-                    Reject Appeal
+                    İtirazı Reddet
                   </Button>
                   <Button 
                     size="sm"
@@ -192,7 +192,7 @@ export function ReviewAppeals({ onBack }: ReviewAppealsProps) {
                     onClick={() => handleDecision(appeal.id, 'approve')}
                   >
                     <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Approve Appeal
+                    İtirazı Kabul Et
                   </Button>
                 </div>
               )}
@@ -206,11 +206,11 @@ export function ReviewAppeals({ onBack }: ReviewAppealsProps) {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {decision === 'approve' ? 'Approve Appeal' : 'Reject Appeal'}
+              {decision === 'approve' ? 'İtirazı Kabul Et' : 'İtirazı Reddet'}
             </DialogTitle>
             <DialogDescription>
               {selectedAppeal && (
-                <>Appeal ID: {selectedAppeal.id} - {selectedAppeal.studentName}</>
+                <>İtiraz ID: {selectedAppeal.id} - {selectedAppeal.studentName}</>
               )}
             </DialogDescription>
           </DialogHeader>
@@ -218,28 +218,28 @@ export function ReviewAppeals({ onBack }: ReviewAppealsProps) {
           <div className="space-y-4">
             {selectedAppeal && (
               <div className="p-4 bg-gray-50 rounded-lg">
-                <div className="text-sm text-gray-600 mb-2">Appeal Reason:</div>
+                <div className="text-sm text-gray-600 mb-2">İtiraz Nedeni:</div>
                 <div className="text-sm text-gray-900">{selectedAppeal.appealReason}</div>
               </div>
             )}
 
             <div className="space-y-2">
               <Label htmlFor="reviewNote">
-                Review Decision Note *
+                Karar Notu *
               </Label>
               <Textarea
                 id="reviewNote"
                 rows={5}
                 placeholder={
                   decision === 'approve' 
-                    ? "Explain why the appeal is approved and any corrective actions taken..."
-                    : "Explain why the appeal is rejected and the reasoning behind the original decision..."
+                    ? "İtirazın neden kabul edildiğini ve yapılan düzeltici işlemleri açıklayın..."
+                    : "İtirazın neden reddedildiğini ve orijinal kararın gerekçelerini açıklayın..."
                 }
                 value={reviewNote}
                 onChange={(e) => setReviewNote(e.target.value)}
               />
               <p className="text-xs text-gray-500">
-                This note will be shared with the student and included in the appeal record.
+                Bu not öğrenci ile paylaşılacak ve itiraz kaydına dahil edilecektir.
               </p>
             </div>
 
@@ -247,7 +247,7 @@ export function ReviewAppeals({ onBack }: ReviewAppealsProps) {
               <Alert>
                 <CheckCircle2 className="h-4 w-4" />
                 <AlertDescription>
-                  Approving this appeal will revert the original decision. The application will be re-evaluated or the student will be admitted.
+                  İtirazın kabul edilmesi orijinal kararı geçersiz kılacaktır. Başvuru yeniden değerlendirilecek veya öğrenci kabul edilecektir.
                 </AlertDescription>
               </Alert>
             )}
@@ -256,7 +256,7 @@ export function ReviewAppeals({ onBack }: ReviewAppealsProps) {
               <Alert variant="destructive">
                 <XCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Rejecting this appeal will uphold the original decision. This is final and cannot be appealed again.
+                  İtirazın reddedilmesi orijinal kararı koruyacaktır. Bu karar nidaidir ve tekrar itiraz edilemez.
                 </AlertDescription>
               </Alert>
             )}
@@ -269,7 +269,7 @@ export function ReviewAppeals({ onBack }: ReviewAppealsProps) {
                   setReviewNote('');
                 }}
               >
-                Cancel
+                İptal
               </Button>
               <Button 
                 onClick={submitDecision}
@@ -277,7 +277,7 @@ export function ReviewAppeals({ onBack }: ReviewAppealsProps) {
                 style={decision === 'approve' ? { backgroundColor: '#C00000' } : undefined}
                 variant={decision === 'reject' ? 'destructive' : 'default'}
               >
-                {decision === 'approve' ? 'Confirm Approval' : 'Confirm Rejection'}
+                {decision === 'approve' ? 'Kabulü Onayla' : 'Reddi Onayla'}
               </Button>
             </div>
           </div>

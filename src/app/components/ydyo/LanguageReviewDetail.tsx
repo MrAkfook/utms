@@ -29,17 +29,17 @@ const MOCK_APPLICATION = {
   id: 'APP-2025-001234',
   studentName: 'Ahmet Yılmaz',
   studentId: '202012345',
-  program: 'Computer Engineering',
-  faculty: 'Engineering Faculty',
+  program: 'Bilgisayar Mühendisliği',
+  faculty: 'Mühendislik Fakültesi',
   languageDoc: {
     type: 'TOEFL iBT',
     score: 88,
-    examDate: '2024-08-15',
-    validUntil: '2026-08-15',
+    examDate: '15/08/2024',
+    validUntil: '15/08/2026',
     certificateNumber: 'TOEFL-2024-12345',
     documentUrl: '#'
   },
-  submittedDate: '2025-01-12',
+  submittedDate: '12/01/2025',
   currentStatus: 'pending'
 };
 
@@ -47,17 +47,17 @@ const VALIDATION_RULES = {
   'TOEFL iBT': {
     minScore: 79,
     exemptScore: 90,
-    validityPeriod: '2 years from exam date'
+    validityPeriod: 'Sınav tarihinden itibaren 2 yıl'
   },
   'IELTS Academic': {
     minScore: 6.0,
     exemptScore: 7.0,
-    validityPeriod: '2 years from exam date'
+    validityPeriod: 'Sınav tarihinden itibaren 2 yıl'
   },
   'YDS': {
     minScore: 70,
     exemptScore: 85,
-    validityPeriod: '5 years from exam date'
+    validityPeriod: 'Sınav tarihinden itibaren 5 yıl'
   }
 };
 
@@ -70,22 +70,20 @@ export function LanguageReviewDetail({ applicationId, onBack }: LanguageReviewDe
     if (!decision) return;
     
     setIsSubmitting(true);
-    // Simulate API call
     setTimeout(() => {
       setIsSubmitting(false);
       
-      // Show success toast based on decision
       if (decision === 'successful') {
-        toast.success('Language evaluation submitted successfully', {
-          description: `Application ${applicationId} marked as Successful`
+        toast.success('Dil değerlendirmesi başarıyla kaydedildi', {
+          description: `${applicationId} nolu başvuru "Başarılı" olarak işaretlendi.`
         });
       } else if (decision === 'exempt') {
-        toast.success('Language evaluation submitted successfully', {
-          description: `Application ${applicationId} marked as Exempt with +5 bonus points`
+        toast.success('Dil değerlendirmesi başarıyla kaydedildi', {
+          description: `${applicationId} nolu başvuru "Muaf" (+5 bonus puan) olarak işaretlendi.`
         });
       } else {
-        toast.warning('Language evaluation submitted', {
-          description: `Application ${applicationId} marked as Unsuccessful`
+        toast.warning('Dil değerlendirmesi kaydedildi', {
+          description: `${applicationId} nolu başvuru "Başarısız" olarak işaretlendi.`
         });
       }
       
@@ -103,14 +101,14 @@ export function LanguageReviewDetail({ applicationId, onBack }: LanguageReviewDe
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-gray-900 mb-2">Language Proficiency Verification</h1>
+          <h1 className="text-gray-900 mb-2">Dil Yeterlilik Doğrulama Detayı</h1>
           <p className="text-gray-600">
             {MOCK_APPLICATION.id} - {MOCK_APPLICATION.studentName}
           </p>
         </div>
         <Button variant="outline" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Queue
+          Kuyruğa Dön
         </Button>
       </div>
 
@@ -119,15 +117,15 @@ export function LanguageReviewDetail({ applicationId, onBack }: LanguageReviewDe
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
           <div className="space-y-1">
-            <div><strong>Language Requirement Rules for {MOCK_APPLICATION.languageDoc.type}:</strong></div>
+            <div><strong>{MOCK_APPLICATION.languageDoc.type} için Dil Gereksinim Kuralları:</strong></div>
             <div className="text-sm">
-              • Minimum Passing Score: <strong>{rules.minScore}</strong> {meetsMinimum ? '✓' : '✗'}
+              • Minimum Geçer Puan: <strong>{rules.minScore}</strong> {meetsMinimum ? '✓' : '✗'}
             </div>
             <div className="text-sm">
-              • Exemption Threshold: <strong>{rules.exemptScore}</strong> {qualifiesForExemption ? '✓' : '✗'}
+              • Muafiyet Eşiği: <strong>{rules.exemptScore}</strong> {qualifiesForExemption ? '✓' : '✗'}
             </div>
             <div className="text-sm">
-              • Validity Period: {rules.validityPeriod}
+              • Geçerlilik Süresi: {rules.validityPeriod}
             </div>
           </div>
         </AlertDescription>
@@ -138,81 +136,81 @@ export function LanguageReviewDetail({ applicationId, onBack }: LanguageReviewDe
         <div className="lg:col-span-2 space-y-6">
           {/* Student Information */}
           <Card className="p-6">
-            <h2 className="text-gray-900 mb-4">Student Information</h2>
+            <h2 className="text-gray-900 mb-4 font-medium">Öğrenci Bilgileri</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="text-sm text-gray-600">Student Name</div>
-                <div className="text-gray-900">{MOCK_APPLICATION.studentName}</div>
+                <div className="text-sm text-gray-600">Öğrenci Adı</div>
+                <div className="text-gray-900 font-medium">{MOCK_APPLICATION.studentName}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Student ID</div>
-                <div className="text-gray-900">{MOCK_APPLICATION.studentId}</div>
+                <div className="text-sm text-gray-600">Öğrenci No</div>
+                <div className="text-gray-900 font-medium">{MOCK_APPLICATION.studentId}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Target Program</div>
-                <div className="text-gray-900">{MOCK_APPLICATION.program}</div>
+                <div className="text-sm text-gray-600">Hedef Program</div>
+                <div className="text-gray-900 font-medium">{MOCK_APPLICATION.program}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Faculty</div>
-                <div className="text-gray-900">{MOCK_APPLICATION.faculty}</div>
+                <div className="text-sm text-gray-600">Fakülte</div>
+                <div className="text-gray-900 font-medium">{MOCK_APPLICATION.faculty}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Application Date</div>
-                <div className="text-gray-900 flex items-center">
+                <div className="text-sm text-gray-600">Başvuru Tarihi</div>
+                <div className="text-gray-900 flex items-center font-medium">
                   <Calendar className="w-4 h-4 mr-1 text-gray-500" />
                   {MOCK_APPLICATION.submittedDate}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Current Status</div>
-                <Badge className="bg-yellow-100 text-yellow-800">Pending YDYO Review</Badge>
+                <div className="text-sm text-gray-600">Mevcut Durum</div>
+                <Badge className="bg-yellow-100 text-yellow-800">YDYO İncelemesi Bekliyor</Badge>
               </div>
             </div>
           </Card>
 
           {/* Language Document Details */}
           <Card className="p-6">
-            <h2 className="text-gray-900 mb-4">Language Certificate Details</h2>
+            <h2 className="text-gray-900 mb-4 font-medium">Dil Belgesi Detayları</h2>
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="p-4 bg-blue-50 rounded-lg">
-                <div className="text-sm text-gray-600 mb-1">Exam Type</div>
-                <div className="text-gray-900">{MOCK_APPLICATION.languageDoc.type}</div>
+                <div className="text-sm text-gray-600 mb-1">Sınav Türü</div>
+                <div className="text-gray-900 font-bold">{MOCK_APPLICATION.languageDoc.type}</div>
               </div>
               <div className="p-4 bg-blue-50 rounded-lg">
-                <div className="text-sm text-gray-600 mb-1">Reported Score</div>
-                <div className="text-2xl text-gray-900">{MOCK_APPLICATION.languageDoc.score}</div>
+                <div className="text-sm text-gray-600 mb-1">Beyan Edilen Puan</div>
+                <div className="text-2xl text-gray-900 font-bold">{MOCK_APPLICATION.languageDoc.score}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Exam Date</div>
-                <div className="text-gray-900">{MOCK_APPLICATION.languageDoc.examDate}</div>
+                <div className="text-sm text-gray-600">Sınav Tarihi</div>
+                <div className="text-gray-900 font-medium">{MOCK_APPLICATION.languageDoc.examDate}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Valid Until</div>
-                <div className="text-gray-900">{MOCK_APPLICATION.languageDoc.validUntil}</div>
+                <div className="text-sm text-gray-600">Geçerlilik Sonu</div>
+                <div className="text-gray-900 font-medium">{MOCK_APPLICATION.languageDoc.validUntil}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Certificate Number</div>
-                <div className="text-gray-900">{MOCK_APPLICATION.languageDoc.certificateNumber}</div>
+                <div className="text-sm text-gray-600">Sertifika No</div>
+                <div className="text-gray-900 font-medium">{MOCK_APPLICATION.languageDoc.certificateNumber}</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">Result Assessment</div>
+                <div className="text-sm text-gray-600">Sonuç Değerlendirmesi</div>
                 <div className="space-y-1">
                   {meetsMinimum && (
-                    <div className="flex items-center text-green-600 text-sm">
+                    <div className="flex items-center text-green-600 text-sm font-medium">
                       <CheckCircle2 className="w-4 h-4 mr-1" />
-                      Meets minimum requirement
+                      Minimum gereksinimi karşılıyor
                     </div>
                   )}
                   {!meetsMinimum && (
-                    <div className="flex items-center text-red-600 text-sm">
+                    <div className="flex items-center text-red-600 text-sm font-medium">
                       <XCircle className="w-4 h-4 mr-1" />
-                      Below minimum requirement
+                      Minimum gereksinimin altında
                     </div>
                   )}
                   {qualifiesForExemption && (
-                    <div className="flex items-center text-blue-600 text-sm">
+                    <div className="flex items-center text-blue-600 text-sm font-medium">
                       <Award className="w-4 h-4 mr-1" />
-                      Qualifies for language exemption
+                      Dil muafiyeti için uygun
                     </div>
                   )}
                 </div>
@@ -222,18 +220,18 @@ export function LanguageReviewDetail({ applicationId, onBack }: LanguageReviewDe
             {/* Document Viewer */}
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center bg-gray-50">
               <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <div className="text-sm text-gray-900 mb-2">Language Certificate Document</div>
+              <div className="text-sm text-gray-900 mb-2 font-medium">Dil Yeterlilik Belgesi Dosyası</div>
               <div className="text-xs text-gray-500 mb-4">
-                Official language proficiency certificate uploaded by student
+                Öğrenci tarafından yüklenen resmi dil yeterlilik sertifikası
               </div>
               <div className="flex items-center justify-center space-x-3">
                 <Button size="sm" variant="outline">
                   <Eye className="w-4 h-4 mr-2" />
-                  View Full Document
+                  Belgeyi Görüntüle
                 </Button>
                 <Button size="sm" variant="outline">
                   <Download className="w-4 h-4 mr-2" />
-                  Download PDF
+                  PDF Olarak İndir
                 </Button>
               </div>
             </div>
@@ -249,53 +247,53 @@ export function LanguageReviewDetail({ applicationId, onBack }: LanguageReviewDe
         {/* Right Panel - Decision Form */}
         <div className="space-y-6">
           <Card className="p-6 sticky top-6">
-            <h2 className="text-gray-900 mb-4">Evaluation Decision</h2>
+            <h2 className="text-gray-900 mb-4 font-medium">Değerlendirme Kararı</h2>
             
             <div className="space-y-4">
               {/* Decision Radio Buttons */}
               <div className="space-y-3">
-                <Label>Select Decision *</Label>
+                <Label>Karar Seçiniz *</Label>
                 <RadioGroup value={decision} onValueChange={(value: any) => setDecision(value)}>
                   <div className="space-y-3">
-                    <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-green-50 transition">
+                    <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-green-50 transition cursor-pointer">
                       <RadioGroupItem value="successful" id="successful" />
                       <Label htmlFor="successful" className="flex-1 cursor-pointer">
                         <div className="flex items-center space-x-2">
                           <CheckCircle2 className="w-4 h-4 text-green-600" />
                           <div>
-                            <div className="text-sm text-gray-900">Successful</div>
+                            <div className="text-sm text-gray-900 font-medium">Başarılı</div>
                             <div className="text-xs text-gray-500">
-                              Meets minimum requirement
+                              Minimum gereksinimi karşılıyor
                             </div>
                           </div>
                         </div>
                       </Label>
                     </div>
 
-                    <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-red-50 transition">
+                    <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-red-50 transition cursor-pointer">
                       <RadioGroupItem value="unsuccessful" id="unsuccessful" />
                       <Label htmlFor="unsuccessful" className="flex-1 cursor-pointer">
                         <div className="flex items-center space-x-2">
                           <XCircle className="w-4 h-4 text-red-600" />
                           <div>
-                            <div className="text-sm text-gray-900">Unsuccessful / Invalid</div>
+                            <div className="text-sm text-gray-900 font-medium">Başarısız / Geçersiz</div>
                             <div className="text-xs text-gray-500">
-                              Below requirement or invalid
+                              Gereksinimi karşılamıyor veya belge geçersiz
                             </div>
                           </div>
                         </div>
                       </Label>
                     </div>
 
-                    <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-blue-50 transition">
+                    <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-blue-50 transition cursor-pointer">
                       <RadioGroupItem value="exempt" id="exempt" />
                       <Label htmlFor="exempt" className="flex-1 cursor-pointer">
                         <div className="flex items-center space-x-2">
                           <Award className="w-4 h-4 text-blue-600" />
                           <div>
-                            <div className="text-sm text-gray-900">Exempt</div>
+                            <div className="text-sm text-gray-900 font-medium">Muaf</div>
                             <div className="text-xs text-gray-500">
-                              Qualifies for exemption (+5 bonus)
+                              Muafiyet kriterlerini sağlıyor (+5 bonus)
                             </div>
                           </div>
                         </div>
@@ -310,7 +308,7 @@ export function LanguageReviewDetail({ applicationId, onBack }: LanguageReviewDe
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription className="text-sm">
-                    Please provide detailed notes explaining why the certificate is unsuccessful or invalid.
+                    Lütfen belgenin neden başarısız veya geçersiz olduğunu açıklayan detaylı notlar ekleyiniz.
                   </AlertDescription>
                 </Alert>
               )}
@@ -318,18 +316,18 @@ export function LanguageReviewDetail({ applicationId, onBack }: LanguageReviewDe
               {/* Notes */}
               <div className="space-y-2">
                 <Label htmlFor="notes">
-                  Evaluation Notes {decision === 'unsuccessful' && <span className="text-red-600">*</span>}
+                  Değerlendirme Notları {decision === 'unsuccessful' && <span className="text-red-600">*</span>}
                 </Label>
                 <Textarea
                   id="notes"
                   rows={5}
-                  placeholder="Add detailed notes about the language certificate evaluation..."
+                  placeholder="Dil belgesi değerlendirmesi hakkında detaylı notlar ekleyin..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className={decision === 'unsuccessful' && !notes ? 'border-red-300' : ''}
                 />
                 <p className="text-xs text-gray-500">
-                  These notes will be visible to ÖIDB, YGK, and other reviewers.
+                  Bu notlar ÖİDB, YGK ve diğer incelemeciler tarafından görülebilecektir.
                 </p>
               </div>
 
@@ -338,7 +336,7 @@ export function LanguageReviewDetail({ applicationId, onBack }: LanguageReviewDe
                 <Alert>
                   <Award className="h-4 w-4" />
                   <AlertDescription className="text-sm">
-                    Language exemption will add <strong>+5 bonus points</strong> to the student's transfer score calculation.
+                    Dil muafiyeti, öğrencinin transfer puanı hesaplamasına <strong>+5 bonus puan</strong> ekleyecektir.
                   </AlertDescription>
                 </Alert>
               )}
@@ -351,7 +349,7 @@ export function LanguageReviewDetail({ applicationId, onBack }: LanguageReviewDe
                   className="w-full"
                   style={{ backgroundColor: '#C00000' }}
                 >
-                  {isSubmitting ? 'Submitting...' : 'Submit Evaluation'}
+                  {isSubmitting ? 'Kaydediliyor...' : 'Değerlendirmeyi Gönder'}
                 </Button>
                 
                 <Button 
@@ -360,7 +358,7 @@ export function LanguageReviewDetail({ applicationId, onBack }: LanguageReviewDe
                   disabled={isSubmitting}
                   className="w-full"
                 >
-                  Cancel
+                  İptal
                 </Button>
               </div>
             </div>
@@ -368,13 +366,13 @@ export function LanguageReviewDetail({ applicationId, onBack }: LanguageReviewDe
 
           {/* Quick Reference */}
           <Card className="p-4 bg-blue-50 border-blue-200">
-            <div className="text-sm text-gray-900 mb-2">Quick Reference</div>
+            <div className="text-sm text-gray-900 mb-2 font-medium">Hızlı Referans</div>
             <div className="text-xs text-gray-600 space-y-1">
-              <div>• TOEFL iBT: 79-89 Pass, ≥90 Exempt</div>
-              <div>• IELTS: 6.0-6.9 Pass, ≥7.0 Exempt</div>
-              <div>• YDS: 70-84 Pass, ≥85 Exempt</div>
-              <div>• All certificates must be within validity period</div>
-              <div>• Exemption awards +5 bonus points</div>
+              <div>• TOEFL iBT: 79-89 Geçer, ≥90 Muaf</div>
+              <div>• IELTS: 6.0-6.9 Geçer, ≥7.0 Muaf</div>
+              <div>• YDS: 70-84 Geçer, ≥85 Muaf</div>
+              <div>• Tüm belgeler geçerlilik süresi içinde olmalıdır</div>
+              <div>• Muafiyet +5 bonus puan kazandırır</div>
             </div>
           </Card>
         </div>

@@ -1,16 +1,19 @@
 import { useState } from 'react';
-import { Layout } from '../Layout';
+import { AppShell } from '../AppShell';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { Input } from '../ui/input';
 import { 
   FileText, 
-  Upload, 
   Eye, 
   AlertCircle, 
   CheckCircle2,
   Clock,
-  Plus
+  Plus,
+  Search,
+  Filter,
+  ArrowLeft
 } from 'lucide-react';
 import type { User } from '../../App';
 import { ApplicationForm } from './ApplicationForm';
@@ -29,246 +32,331 @@ type StudentView =
   | 'dashboard'
   | 'new-application'
   | 'upload-documents'
-  | 'fix-application'
   | 'view-timeline'
   | 'view-result'
   | 'submit-appeal';
 
-export function StudentDashboard({ user, onLogout, onSwitchRole }: StudentDashboardProps) {
-  const [currentView, setCurrentView] = useState<StudentView>('dashboard');
-  const [applicationData, setApplicationData] = useState<any>(null);
+type Section = 'dashboard' | 'applications' | 'track' | 'settings';
 
-  // Mock application status
-  const hasActiveApplication = true;
-  const applicationStatus = 'under_review'; // draft, submitted, under_review, returned, completed
-  const applicationId = 'APP-2025-001234';
+// Mock applications data
+const MOCK_APPLICATIONS = [
+  {
+    id: 'APP-2025-001234',
+    targetProgram: 'Computer Engineering',
+    targetFaculty: 'Engineering Faculty',
+    targetSemester: '3rd Semester',
+    submittedDate: '2025-01-10',
+    lastUpdated: '2025-01-12',
+    status: 'under_review',
+    currentStage: 'YDYO Language Review',
+    progress: 40
+  },
+  {
+    id: 'APP-2024-009876',
+    targetProgram: 'Electrical Engineering',
+    targetFaculty: 'Engineering Faculty',
+    targetSemester: '5th Semester',
+    submittedDate: '2024-09-15',
+    lastUpdated: '2024-10-01',
+    status: 'final_accepted',
+    currentStage: 'Completed',
+    progress: 100
+  }
+];
+
+export function StudentDashboard({ user, onLogout, onSwitchRole }: StudentDashboardProps) {
+  const [currentSection, setCurrentSection] = useState<Section>('dashboard');
+  const [currentView, setCurrentView] = useState<StudentView>('dashboard');
+  const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
+  const [applicationData, setApplicationData] = useState<any>(null);
 
   const handleFormSave = (data: any) => {
     setApplicationData(data);
     setCurrentView('upload-documents');
   };
 
-  if (currentView === 'new-application') {
-    return (
-      <Layout user={user} currentRole="Student" onLogout={onLogout} onSwitchRole={onSwitchRole}>
-        <ApplicationForm 
-          onSave={handleFormSave}
-          onCancel={() => setCurrentView('dashboard')}
-        />
-      </Layout>
-    );
-  }
+  const getStatusConfig = (status: string) => {
+    switch (status) {
+      case 'draft':
+        return { label: 'Draft', className: 'bg-gray-100 text-gray-800' };
+      case 'pending_upload':
+        return { label: 'Pending Document Upload', className: 'bg-blue-100 text-blue-800' };
+      case 'under_review':
+        return { label: 'Under Review', className: 'bg-yellow-100 text-yellow-800' };
+      case 'returned':
+        return { label: 'Returned for Correction', className: 'bg-red-100 text-red-800' };
+      case 'final_accepted':
+        return { label: 'Final Accepted', className: 'bg-green-100 text-green-800' };
+      case 'final_rejected':
+        return { label: 'Final Rejected', className: 'bg-red-100 text-red-800' };
+      case 'appeal_submitted':
+        return { label: 'Appeal Submitted', className: 'bg-purple-100 text-purple-800' };
+      default:
+        return { label: status, className: 'bg-gray-100 text-gray-800' };
+    }
+  };
 
-  if (currentView === 'upload-documents') {
-    return (
-      <Layout user={user} currentRole="Student" onLogout={onLogout} onSwitchRole={onSwitchRole}>
-        <DocumentUpload 
-          applicationId={applicationId}
-          applicationData={applicationData}
-          onComplete={() => setCurrentView('view-timeline')}
-          onBack={() => setCurrentView('new-application')}
-        />
-      </Layout>
-    );
-  }
+  const renderDashboardContent = () => {
+    if (currentView === 'new-application') {
+      return (
+        <div className="space-y-4">
+          <Button variant="ghost" onClick={() => setCurrentView('dashboard')} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Geri Dön
+          </Button>
+          <ApplicationForm
+            onSave={handleFormSave}
+            onCancel={() => setCurrentView('dashboard')}
+          />
+        </div>
+      );
+    }
 
-  if (currentView === 'view-timeline') {
-    return (
-      <Layout user={user} currentRole="Student" onLogout={onLogout} onSwitchRole={onSwitchRole}>
-        <ApplicationTimeline 
-          applicationId={applicationId}
-          onBack={() => setCurrentView('dashboard')}
-        />
-      </Layout>
-    );
-  }
+    if (currentView === 'upload-documents') {
+      return (
+        <div className="space-y-4">
+          <Button variant="ghost" onClick={() => setCurrentView('new-application')} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Geri Dön
+          </Button>
+          <DocumentUpload
+            applicationId="APP-2025-NEW"
+            applicationData={applicationData}
+            onComplete={() => setCurrentView('dashboard')}
+            onBack={() => setCurrentView('new-application')}
+          />
+        </div>
+      );
+    }
 
-  if (currentView === 'view-result') {
-    return (
-      <Layout user={user} currentRole="Student" onLogout={onLogout} onSwitchRole={onSwitchRole}>
-        <FinalResult 
-          applicationId={applicationId}
-          onAppeal={() => setCurrentView('submit-appeal')}
-          onBack={() => setCurrentView('dashboard')}
-        />
-      </Layout>
-    );
-  }
+    if (currentView === 'view-timeline' && selectedAppId) {
+      return (
+        <div className="space-y-4">
+          <Button variant="ghost" onClick={() => { setCurrentView('dashboard'); setSelectedAppId(null); }} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Geri Dön
+          </Button>
+          <ApplicationTimeline
+            applicationId={selectedAppId}
+            onBack={() => {
+              setCurrentView('dashboard');
+              setSelectedAppId(null);
+            }}
+          />
+        </div>
+      );
+    }
 
-  if (currentView === 'submit-appeal') {
-    return (
-      <Layout user={user} currentRole="Student" onLogout={onLogout} onSwitchRole={onSwitchRole}>
-        <AppealForm 
-          applicationId={applicationId}
-          onSubmit={() => setCurrentView('dashboard')}
-          onCancel={() => setCurrentView('view-result')}
-        />
-      </Layout>
-    );
-  }
+    if (currentView === 'view-result' && selectedAppId) {
+      return (
+        <div className="space-y-4">
+          <Button variant="ghost" onClick={() => { setCurrentView('dashboard'); setSelectedAppId(null); }} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Geri Dön
+          </Button>
+          <FinalResult
+            applicationId={selectedAppId}
+            onAppeal={() => setCurrentView('submit-appeal')}
+            onBack={() => {
+              setCurrentView('dashboard');
+              setSelectedAppId(null);
+            }}
+          />
+        </div>
+      );
+    }
 
-  // Dashboard View
-  return (
-    <Layout user={user} currentRole="Student" onLogout={onLogout} onSwitchRole={onSwitchRole}>
+    if (currentView === 'submit-appeal' && selectedAppId) {
+      return (
+        <div className="space-y-4">
+          <Button variant="ghost" onClick={() => setCurrentView('view-result')} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Geri Dön
+          </Button>
+          <AppealForm
+            applicationId={selectedAppId}
+            onSubmit={() => setCurrentView('dashboard')}
+            onCancel={() => setCurrentView('view-result')}
+          />
+        </div>
+      );
+    }
+
+    // Default Dashboard/Applications view
+    return (
       <div className="space-y-6">
-        {/* Welcome Header */}
-        <div>
-          <h1 className="text-gray-900 mb-2">Welcome, {user.name}!</h1>
-          <p className="text-gray-600">Manage your transfer applications</p>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-gray-900 mb-2">Hoş Geldiniz, {user.name}!</h1>
+            <p className="text-gray-600">Transfer başvurularınızı buradan yönetebilirsiniz.</p>
+          </div>
+          <Button
+            style={{ backgroundColor: '#C00000' }}
+            onClick={() => setCurrentView('new-application')}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Yeni Başvuru Oluştur
+          </Button>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="p-6">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm text-gray-600 mb-1">Toplam Başvuru</div>
+                <div className="text-2xl text-gray-900">{MOCK_APPLICATIONS.length}</div>
+              </div>
               <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C00000' }}>
                 <FileText className="w-6 h-6 text-white" />
               </div>
-              <div>
-                <div className="text-2xl text-gray-900">1</div>
-                <div className="text-sm text-gray-600">Active Application</div>
-              </div>
             </div>
           </Card>
 
           <Card className="p-6">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm text-gray-600 mb-1">İncelemede</div>
+                <div className="text-2xl text-gray-900">
+                  {MOCK_APPLICATIONS.filter(a => a.status === 'under_review').length}
+                </div>
+              </div>
               <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
                 <Clock className="w-6 h-6 text-yellow-600" />
               </div>
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
               <div>
-                <div className="text-2xl text-gray-900">Under Review</div>
-                <div className="text-sm text-gray-600">Current Status</div>
+                <div className="text-sm text-gray-600 mb-1">Kabul Edilen</div>
+                <div className="text-2xl text-gray-900">
+                  {MOCK_APPLICATIONS.filter(a => a.status === 'final_accepted').length}
+                </div>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
               </div>
             </div>
           </Card>
 
           <Card className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                <AlertCircle className="w-6 h-6 text-blue-600" />
-              </div>
+            <div className="flex items-center justify-between">
               <div>
-                <div className="text-2xl text-gray-900">2</div>
-                <div className="text-sm text-gray-600">Notifications</div>
+                <div className="text-sm text-gray-600 mb-1">Eylem Bekleyen</div>
+                <div className="text-2xl text-gray-900">0</div>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-red-600" />
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Recent Application Summary */}
-        {hasActiveApplication && (
-          <Card className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h2 className="text-gray-900 mb-1">Application #{applicationId}</h2>
-                <p className="text-sm text-gray-600">Computer Engineering - 3rd Semester Entry</p>
-              </div>
-              <Badge className="bg-yellow-100 text-yellow-800">Under Review</Badge>
+        {/* Search and Filter */}
+        <Card className="p-4">
+          <div className="flex items-center space-x-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Başvuru ID veya program ara..."
+                className="pl-10"
+              />
             </div>
-
-            {/* Mini Timeline */}
-            <div className="flex items-center space-x-2 mb-6">
-              <div className="flex items-center space-x-2">
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
-                <span className="text-sm text-gray-600">Submitted</span>
-              </div>
-              <div className="flex-1 h-px bg-green-600"></div>
-              <div className="flex items-center space-x-2">
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
-                <span className="text-sm text-gray-600">ÖİDB Review</span>
-              </div>
-              <div className="flex-1 h-px bg-gray-300"></div>
-              <div className="flex items-center space-x-2">
-                <Clock className="w-5 h-5 text-yellow-600" />
-                <span className="text-sm text-gray-600">YDYO Review</span>
-              </div>
-              <div className="flex-1 h-px bg-gray-300"></div>
-              <div className="flex items-center space-x-2">
-                <div className="w-5 h-5 rounded-full border-2 border-gray-300"></div>
-                <span className="text-sm text-gray-400">YGK Review</span>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-3">
-              <Button 
-                variant="outline"
-                onClick={() => setCurrentView('view-timeline')}
-              >
-                <Eye className="w-4 h-4 mr-2" />
-                View Full Timeline
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {/* Notifications */}
-        <Card className="p-6">
-          <h2 className="text-gray-900 mb-4">Recent Notifications</h2>
-          <div className="space-y-3">
-            <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-              <div className="flex-1">
-                <div className="text-sm text-gray-900">Language evaluation in progress</div>
-                <div className="text-xs text-gray-600 mt-1">Your application is being reviewed by YDYO - 2 hours ago</div>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3 p-3 bg-green-50 rounded-lg">
-              <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
-              <div className="flex-1">
-                <div className="text-sm text-gray-900">Initial verification completed</div>
-                <div className="text-xs text-gray-600 mt-1">ÖİDB has verified your documents - 1 day ago</div>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Quick Actions */}
-        <Card className="p-6">
-          <h2 className="text-gray-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Button 
-              variant="outline"
-              className="h-auto py-4 justify-start"
-              onClick={() => setCurrentView('new-application')}
-              disabled={hasActiveApplication}
-            >
-              <Plus className="w-5 h-5 mr-3" />
-              <div className="text-left">
-                <div className="text-sm">Create New Application</div>
-                <div className="text-xs text-gray-500 mt-1">Start a new transfer application</div>
-              </div>
-            </Button>
-            
-            <Button 
-              variant="outline"
-              className="h-auto py-4 justify-start"
-              onClick={() => setCurrentView('view-result')}
-            >
-              <Eye className="w-5 h-5 mr-3" />
-              <div className="text-left">
-                <div className="text-sm">View Results</div>
-                <div className="text-xs text-gray-500 mt-1">Check your application outcome</div>
-              </div>
+            <Button variant="outline">
+              <Filter className="w-4 h-4 mr-2" />
+              Filtrele
             </Button>
           </div>
         </Card>
 
-        {/* Application Period Info */}
-        <Card className="p-6 border-l-4" style={{ borderLeftColor: '#C00000' }}>
-          <div className="flex items-start space-x-3">
-            <AlertCircle className="w-5 h-5 mt-0.5" style={{ color: '#C00000' }} />
-            <div>
-              <div className="text-sm text-gray-900 mb-1">2024-2025 Spring Transfer Application Period</div>
-              <div className="text-xs text-gray-600">
-                Application Deadline: January 15, 2025<br />
-                Results Announcement: February 1, 2025
-              </div>
-            </div>
+        {/* Applications Table */}
+        <Card className="p-6">
+          <h2 className="text-gray-900 mb-4">Tüm Başvurularım</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Başvuru ID</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Hedef Program</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Dönem</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Durum</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Mevcut Aşama</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">Son Güncelleme</th>
+                  <th className="text-left py-3 px-4 text-sm text-gray-700">İşlemler</th>
+                </tr>
+              </thead>
+              <tbody>
+                {MOCK_APPLICATIONS.map((app) => {
+                  const statusConfig = getStatusConfig(app.status);
+                  return (
+                    <tr key={app.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 px-4 text-sm text-gray-900">{app.id}</td>
+                      <td className="py-3 px-4">
+                        <div className="text-sm text-gray-900">{app.targetProgram}</div>
+                        <div className="text-xs text-gray-500">{app.targetFaculty}</div>
+                      </td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{app.targetSemester}</td>
+                      <td className="py-3 px-4">
+                        <Badge className={statusConfig.className}>
+                          {statusConfig.label}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{app.currentStage}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{app.lastUpdated}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedAppId(app.id);
+                              setCurrentView('view-timeline');
+                            }}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Takip Et
+                          </Button>
+                          {(app.status === 'final_accepted' || app.status === 'final_rejected') && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedAppId(app.id);
+                                setCurrentView('view-result');
+                              }}
+                            >
+                              Sonucu Gör
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </Card>
       </div>
-    </Layout>
+    );
+  };
+
+  return (
+    <AppShell
+      user={user}
+      currentRole="Student"
+      onLogout={onLogout}
+      onSwitchRole={onSwitchRole}
+      currentSection={currentSection}
+      onNavigate={(section) => {
+        setCurrentSection(section as Section);
+        setCurrentView('dashboard');
+      }}
+    >
+      {renderDashboardContent()}
+    </AppShell>
   );
 }

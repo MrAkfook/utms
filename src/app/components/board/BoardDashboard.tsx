@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Layout } from '../Layout';
+import { AppShell } from '../AppShell';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Scale, CheckCircle2, XCircle, Eye, FileText } from 'lucide-react';
+import { Scale, CheckCircle2, XCircle, Eye, FileText, ArrowLeft } from 'lucide-react';
 import type { User } from '../../App';
 import { PackageReview } from './PackageReview';
 import { toast } from 'sonner';
@@ -15,6 +15,7 @@ interface BoardDashboardProps {
 }
 
 type BoardView = 'dashboard' | 'package-review';
+type Section = 'dashboard' | 'packages' | 'decisions' | 'reports';
 
 // Mock packages for board review
 const MOCK_BOARD_PACKAGES = [
@@ -65,6 +66,7 @@ const MOCK_BOARD_PACKAGES = [
 ];
 
 export function BoardDashboard({ user, onLogout, onSwitchRole }: BoardDashboardProps) {
+  const [currentSection, setCurrentSection] = useState<Section>('dashboard');
   const [currentView, setCurrentView] = useState<BoardView>('dashboard');
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
 
@@ -73,41 +75,45 @@ export function BoardDashboard({ user, onLogout, onSwitchRole }: BoardDashboardP
     setCurrentView('package-review');
   };
 
-  if (currentView === 'package-review' && selectedPackage) {
-    return (
-      <Layout user={user} currentRole="Board" onLogout={onLogout} onSwitchRole={onSwitchRole}>
-        <PackageReview
-          packageId={selectedPackage}
-          onBack={() => setCurrentView('dashboard')}
-        />
-      </Layout>
-    );
-  }
-
-  const pendingCount = MOCK_BOARD_PACKAGES.filter(p => p.status === 'pending_board_review').length;
-  const approvedCount = MOCK_BOARD_PACKAGES.filter(p => p.status === 'approved').length;
-  const rejectedCount = MOCK_BOARD_PACKAGES.filter(p => p.status === 'rejected').length;
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending_board_review':
-        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">Pending Review</Badge>;
-      case 'approved':
-        return <Badge className="bg-green-100 text-green-800 border-green-300">Approved</Badge>;
-      case 'rejected':
-        return <Badge className="bg-red-100 text-red-800 border-red-300">Rejected</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
+  const renderDashboardContent = () => {
+    if (currentView === 'package-review' && selectedPackage) {
+      return (
+        <div className="space-y-4">
+          <Button variant="ghost" onClick={() => setCurrentView('dashboard')} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Geri Dön
+          </Button>
+          <PackageReview
+            packageId={selectedPackage}
+            onBack={() => setCurrentView('dashboard')}
+          />
+        </div>
+      );
     }
-  };
 
-  return (
-    <Layout user={user} currentRole="Board" onLogout={onLogout} onSwitchRole={onSwitchRole}>
+    const pendingCount = MOCK_BOARD_PACKAGES.filter(p => p.status === 'pending_board_review').length;
+    const approvedCount = MOCK_BOARD_PACKAGES.filter(p => p.status === 'approved').length;
+    const rejectedCount = MOCK_BOARD_PACKAGES.filter(p => p.status === 'rejected').length;
+
+    const getStatusBadge = (status: string) => {
+      switch (status) {
+        case 'pending_board_review':
+          return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">Kurul İncelemesi Bekliyor</Badge>;
+        case 'approved':
+          return <Badge className="bg-green-100 text-green-800 border-green-300">Onaylandı</Badge>;
+        case 'rejected':
+          return <Badge className="bg-red-100 text-red-800 border-red-300">Reddedildi</Badge>;
+        default:
+          return <Badge>{status}</Badge>;
+      }
+    };
+
+    return (
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-gray-900 mb-2">Faculty Board Dashboard</h1>
-          <p className="text-gray-600">Final Review & Approval of Transfer Packages</p>
+          <h1 className="text-gray-900 mb-2">Fakülte Yönetim Kurulu Paneli</h1>
+          <p className="text-gray-600">Transfer Paketlerinin Nihai İncelemesi ve Onayı</p>
         </div>
 
         {/* Statistics Cards */}
@@ -115,7 +121,7 @@ export function BoardDashboard({ user, onLogout, onSwitchRole }: BoardDashboardP
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Pending Review</div>
+                <div className="text-sm text-gray-600 mb-1">İnceleme Bekleyen</div>
                 <div className="text-2xl text-gray-900">{pendingCount}</div>
               </div>
               <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
@@ -127,7 +133,7 @@ export function BoardDashboard({ user, onLogout, onSwitchRole }: BoardDashboardP
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Approved</div>
+                <div className="text-sm text-gray-600 mb-1">Onaylanan</div>
                 <div className="text-2xl text-gray-900">{approvedCount}</div>
               </div>
               <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -139,7 +145,7 @@ export function BoardDashboard({ user, onLogout, onSwitchRole }: BoardDashboardP
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Rejected</div>
+                <div className="text-sm text-gray-600 mb-1">Reddedilen</div>
                 <div className="text-2xl text-gray-900">{rejectedCount}</div>
               </div>
               <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
@@ -151,7 +157,7 @@ export function BoardDashboard({ user, onLogout, onSwitchRole }: BoardDashboardP
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Total Packages</div>
+                <div className="text-sm text-gray-600 mb-1">Toplam Paket</div>
                 <div className="text-2xl text-gray-900">{MOCK_BOARD_PACKAGES.length}</div>
               </div>
               <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C00000' }}>
@@ -165,8 +171,8 @@ export function BoardDashboard({ user, onLogout, onSwitchRole }: BoardDashboardP
         <Card className="p-6" style={{ backgroundColor: '#C00000' }}>
           <div className="flex items-center justify-between text-white">
             <div>
-              <div className="text-sm opacity-90 mb-1">Next Faculty Board Meeting</div>
-              <div className="text-2xl">January 25, 2025 - 14:00</div>
+              <div className="text-sm opacity-90 mb-1">Gelecek Fakülte Yönetim Kurulu Toplantısı</div>
+              <div className="text-2xl">25 Ocak 2025 - 14:00</div>
             </div>
             <Scale className="w-12 h-12 opacity-90" />
           </div>
@@ -175,9 +181,9 @@ export function BoardDashboard({ user, onLogout, onSwitchRole }: BoardDashboardP
         {/* Packages for Review */}
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg text-gray-900">Packages for Board Review</h2>
+            <h2 className="text-lg text-gray-900">Kurul İncelemesindeki Paketler</h2>
             <Badge className="bg-gray-100 text-gray-700 border-gray-300">
-              Spring 2024-2025
+              Bahar 2024-2025
             </Badge>
           </div>
 
@@ -195,25 +201,25 @@ export function BoardDashboard({ user, onLogout, onSwitchRole }: BoardDashboardP
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-2">
                       <div>
-                        <div className="text-gray-600">Package ID</div>
+                        <div className="text-gray-600">Paket ID</div>
                         <div className="text-gray-900">{pkg.id}</div>
                       </div>
                       <div>
-                        <div className="text-gray-600">Semester</div>
+                        <div className="text-gray-600">Dönem</div>
                         <div className="text-gray-900">{pkg.semester}</div>
                       </div>
                       <div>
-                        <div className="text-gray-600">Applicants</div>
+                        <div className="text-gray-600">Başvuranlar</div>
                         <div className="text-gray-900">{pkg.applicantCount}</div>
                       </div>
                       <div>
-                        <div className="text-gray-600">Meeting Date</div>
+                        <div className="text-gray-600">Toplantı Tarihi</div>
                         <div className="text-gray-900">{pkg.meetingScheduled}</div>
                       </div>
                     </div>
                     {pkg.deanNotes && (
                       <div className="bg-blue-50 border border-blue-200 rounded p-2 text-sm">
-                        <span className="text-blue-900">Dean's Notes: </span>
+                        <span className="text-blue-900">Dekanlık Notu: </span>
                         <span className="text-blue-800">{pkg.deanNotes}</span>
                       </div>
                     )}
@@ -225,7 +231,7 @@ export function BoardDashboard({ user, onLogout, onSwitchRole }: BoardDashboardP
                       onClick={() => handleReviewPackage(pkg.id)}
                     >
                       <Eye className="w-4 h-4 mr-2" />
-                      Review
+                      İncele
                     </Button>
                   </div>
                 </div>
@@ -239,16 +245,32 @@ export function BoardDashboard({ user, onLogout, onSwitchRole }: BoardDashboardP
           <div className="flex gap-3">
             <Scale className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-purple-900 mb-1">Board Review Process</h3>
+              <h3 className="text-purple-900 mb-1">Kurul İnceleme Süreci</h3>
               <p className="text-sm text-purple-800">
-                Review packages from Dean's Office, examine ranking lists and recommendations,
-                discuss special cases in board meetings, and make final approval or rejection decisions.
-                Approved packages will be published to students.
+                Dekanlıktan gelen paketleri inceleyin, sıralama listelerini ve tavsiyeleri değerlendirin,
+                kurul toplantısında özel durumları tartışın ve nihai kabul veya red kararlarını verin.
+                Onaylanan paketler öğrencilere ilan edilecektir.
               </p>
             </div>
           </div>
         </Card>
       </div>
-    </Layout>
+    );
+  };
+
+  return (
+    <AppShell
+      user={user}
+      currentRole="Board"
+      onLogout={onLogout}
+      onSwitchRole={onSwitchRole}
+      currentSection={currentSection}
+      onNavigate={(section) => {
+        setCurrentSection(section as Section);
+        setCurrentView('dashboard');
+      }}
+    >
+      {renderDashboardContent()}
+    </AppShell>
   );
 }

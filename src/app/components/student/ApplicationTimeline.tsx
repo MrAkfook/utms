@@ -5,9 +5,7 @@ import {
   CheckCircle2, 
   Clock, 
   Circle,
-  ArrowLeft,
-  FileText,
-  Eye
+  ArrowLeft
 } from 'lucide-react';
 
 interface ApplicationTimelineProps {
@@ -28,64 +26,64 @@ interface TimelineStep {
 const TIMELINE_STEPS: TimelineStep[] = [
   {
     id: 'submitted',
-    title: 'Application Submitted',
-    description: 'You successfully submitted your transfer application',
+    title: 'Başvuru Gönderildi',
+    description: 'Transfer başvurunuz başarıyla sisteme iletildi',
     status: 'completed',
     timestamp: '2025-01-10 14:30',
-    actor: 'Ahmet Yılmaz (Student)'
+    actor: 'Ahmet Yılmaz (Öğrenci)'
   },
   {
     id: 'oidb_intake',
-    title: 'ÖİDB Initial Verification',
-    description: 'Student Affairs Office is verifying your documents',
+    title: 'ÖİDB Ön İnceleme',
+    description: 'Öğrenci İşleri belgelerinizi doğruluyor',
     status: 'completed',
     timestamp: '2025-01-11 09:15',
     actor: 'Mehmet Demir (ÖİDB)',
-    notes: 'All documents verified. Application forwarded to YDYO.'
+    notes: 'Tüm belgeler doğrulandı. Başvuru YDYO\'ya iletildi.'
   },
   {
     id: 'ydyo_review',
-    title: 'YDYO Language Review',
-    description: 'Foreign Languages Office is reviewing your language proficiency',
+    title: 'YDYO Dil Yeterlilik İncelemesi',
+    description: 'Yabancı Diller Yüksekokulu dil muafiyetinizi değerlendiriyor',
     status: 'active',
     timestamp: '2025-01-12 10:00',
     actor: 'Ayşe Kaya (YDYO)',
-    notes: 'Language document under evaluation.'
+    notes: 'Dil belgesi değerlendirme aşamasında.'
   },
   {
     id: 'ygk_academic',
-    title: 'YGK Academic Evaluation',
-    description: 'Transfer Commission will evaluate your academic eligibility',
+    title: 'YGK Akademik Değerlendirme',
+    description: 'Bölüm komisyonu akademik uygunluğunuzu inceleyecek',
     status: 'pending'
   },
   {
     id: 'ygk_ranking',
-    title: 'YGK Ranking',
-    description: 'You will be ranked against other applicants',
+    title: 'YGK Sıralama',
+    description: 'Diğer adaylarla birlikte puan sıralamasına alınacaksınız',
     status: 'pending'
   },
   {
     id: 'ygk_intibak',
-    title: 'Course Equivalence (İntibak)',
-    description: 'Course equivalence table will be prepared',
+    title: 'Ders Muafiyeti (İntibak)',
+    description: 'Eşdeğer sayılacak dersleriniz belirlenecek',
     status: 'pending'
   },
   {
     id: 'dean_review',
-    title: "Dean's Office Review",
-    description: "Dean's office will review the evaluation package",
+    title: "Dekanlık İncelemesi",
+    description: "Fakülte dekanlığı değerlendirme paketini onaylayacak",
     status: 'pending'
   },
   {
     id: 'board_approval',
-    title: 'Faculty Board Approval',
-    description: 'Final approval from Faculty Board',
+    title: 'Fakülte Yönetim Kurulu Onayı',
+    description: 'Yönetim kurulundan nihai onay süreci',
     status: 'pending'
   },
   {
     id: 'results_published',
-    title: 'Results Published',
-    description: 'Final results will be announced',
+    title: 'Sonuçların İlanı',
+    description: 'Nihai sonuçlar sisteme yansıtılacak',
     status: 'pending'
   }
 ];
@@ -96,12 +94,12 @@ export function ApplicationTimeline({ applicationId, onBack }: ApplicationTimeli
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-gray-900 mb-2">Application Status Timeline</h1>
-          <p className="text-gray-600">Application ID: {applicationId}</p>
+          <h1 className="text-gray-900 mb-2">Başvuru Süreç Takibi</h1>
+          <p className="text-gray-600">Başvuru ID: {applicationId}</p>
         </div>
         <Button variant="outline" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dashboard
+          Panele Geri Dön
         </Button>
       </div>
 
@@ -109,17 +107,17 @@ export function ApplicationTimeline({ applicationId, onBack }: ApplicationTimeli
       <Card className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm text-gray-600 mb-1">Current Status</div>
-            <h2 className="text-gray-900">YDYO Language Review</h2>
-            <p className="text-sm text-gray-600 mt-1">Your language proficiency documents are being evaluated</p>
+            <div className="text-sm text-gray-600 mb-1">Mevcut Durum</div>
+            <h2 className="text-gray-900">YDYO Dil Yeterlilik İncelemesi</h2>
+            <p className="text-sm text-gray-600 mt-1">Dil yeterlilik belgeleriniz komisyon tarafından inceleniyor</p>
           </div>
-          <Badge className="bg-yellow-100 text-yellow-800">In Progress</Badge>
+          <Badge className="bg-yellow-100 text-yellow-800">Devam Ediyor</Badge>
         </div>
       </Card>
 
       {/* Timeline */}
       <Card className="p-6">
-        <h2 className="text-gray-900 mb-6">Application Progress</h2>
+        <h2 className="text-gray-900 mb-6">Başvuru İlerleme Durumu</h2>
         
         <div className="space-y-6">
           {TIMELINE_STEPS.map((step, index) => {
@@ -181,7 +179,7 @@ export function ApplicationTimeline({ applicationId, onBack }: ApplicationTimeli
                   {/* Additional Info */}
                   {step.actor && (
                     <div className="text-xs text-gray-500 mt-2">
-                      <span className="text-gray-600">Handled by:</span> {step.actor}
+                      <span className="text-gray-600">İşlem Yapan:</span> {step.actor}
                     </div>
                   )}
 
@@ -195,7 +193,7 @@ export function ApplicationTimeline({ applicationId, onBack }: ApplicationTimeli
                     <div className="mt-3 flex items-center space-x-2">
                       <div className="flex items-center space-x-1">
                         <div className="w-2 h-2 rounded-full bg-yellow-600 animate-pulse"></div>
-                        <span className="text-xs text-yellow-700">Currently processing</span>
+                        <span className="text-xs text-yellow-700">Şu an işleniyor</span>
                       </div>
                     </div>
                   )}
@@ -208,39 +206,32 @@ export function ApplicationTimeline({ applicationId, onBack }: ApplicationTimeli
 
       {/* Application Details */}
       <Card className="p-6">
-        <h2 className="text-gray-900 mb-4">Application Details</h2>
+        <h2 className="text-gray-900 mb-4">Başvuru Detayları</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <div className="text-sm text-gray-600">Target Program</div>
-            <div className="text-gray-900">Computer Engineering</div>
+            <div className="text-sm text-gray-600">Hedef Program</div>
+            <div className="text-gray-900">Bilgisayar Mühendisliği</div>
           </div>
           <div>
-            <div className="text-sm text-gray-600">Target Semester</div>
-            <div className="text-gray-900">3rd Semester (2nd Year Entry)</div>
+            <div className="text-sm text-gray-600">Hedef Dönem</div>
+            <div className="text-gray-900">3. Dönem (2. Sınıf Giriş)</div>
           </div>
           <div>
-            <div className="text-sm text-gray-600">Current GPA</div>
+            <div className="text-sm text-gray-600">Mevcut GNO (GPA)</div>
             <div className="text-gray-900">3.45 / 4.00</div>
           </div>
           <div>
-            <div className="text-sm text-gray-600">ÖSYM Score</div>
+            <div className="text-sm text-gray-600">ÖSYM Puanı</div>
             <div className="text-gray-900">485.5 (2024)</div>
           </div>
           <div>
-            <div className="text-sm text-gray-600">Submission Date</div>
-            <div className="text-gray-900">January 10, 2025</div>
+            <div className="text-sm text-gray-600">Başvuru Tarihi</div>
+            <div className="text-gray-900">10 Ocak 2025</div>
           </div>
           <div>
-            <div className="text-sm text-gray-600">Expected Result Date</div>
-            <div className="text-gray-900">February 1, 2025</div>
+            <div className="text-sm text-gray-600">Beklenen Sonuç Tarihi</div>
+            <div className="text-gray-900">1 Şubat 2025</div>
           </div>
-        </div>
-
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <Button variant="outline" className="w-full">
-            <FileText className="w-4 h-4 mr-2" />
-            View Application Documents
-          </Button>
         </div>
       </Card>
     </div>

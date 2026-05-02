@@ -7,7 +7,8 @@ import {
   Users, 
   Building2, 
   Scale,
-  Shield
+  Shield,
+  LogOut
 } from 'lucide-react';
 import type { UserRole } from '../App';
 
@@ -25,60 +26,63 @@ const ROLE_CONFIG: Record<UserRole, {
 }> = {
   Student: {
     icon: GraduationCap,
-    title: 'Student',
-    description: 'Submit and track your transfer application',
+    title: 'Öğrenci',
+    description: 'Transfer başvurusu yapın ve sürecinizi takip edin',
     color: '#C00000'
   },
   OIDB: {
     icon: UserCog,
-    title: 'Student Affairs Office (ÖİDB)',
-    description: 'Verify applications and manage workflow',
+    title: 'Öğrenci İşleri (ÖİDB)',
+    description: 'Başvuru doğrulama ve iş akış yönetimi',
     color: '#A82020'
   },
   YDYO: {
     icon: Languages,
-    title: 'Foreign Languages Office (YDYO)',
-    description: 'Review language proficiency documents',
+    title: 'Yabancı Diller (YDYO)',
+    description: 'Dil yeterlilik belgelerini inceleme ve onay',
     color: '#8B1A1A'
   },
   YGK: {
     icon: Users,
-    title: 'Transfer Commission (YGK)',
-    description: 'Evaluate academic eligibility and rankings',
+    title: 'Bölüm Komisyonu (YGK)',
+    description: 'Akademik değerlendirme ve sıralama işlemleri',
     color: '#7A1616'
   },
   Dean: {
     icon: Building2,
-    title: "Dean's Office",
-    description: 'Review and forward evaluation packages',
+    title: "Dekanlık",
+    description: 'Değerlendirme paketlerini inceleme ve sevk',
     color: '#6B1313'
   },
   Board: {
     icon: Scale,
-    title: 'Faculty Board',
-    description: 'Final approval of transfer decisions',
+    title: 'Fakülte Kurulu',
+    description: 'Transfer kararlarının nihai onayı',
     color: '#5C1010'
   },
   Admin: {
     icon: Shield,
-    title: 'System Admin',
-    description: 'Manage users, quotas, and system settings',
+    title: 'Sistem Yöneticisi',
+    description: 'Kullanıcı, kontenjan ve sistem ayarları yönetimi',
     color: '#4D0D0D'
   }
 };
 
 export function RoleSwitchScreen({ roles, onSelectRole, onLogout }: RoleSwitchScreenProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4">
-      <div className="max-w-6xl mx-auto py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6 font-sans">
+      <div className="max-w-6xl mx-auto py-12">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-gray-900 mb-2">Select Your Role</h1>
-          <p className="text-gray-600">Choose which role you want to access</p>
+        <div className="text-center mb-12">
+          <div className="inline-block p-3 bg-red-50 rounded-2xl mb-4">
+            <Shield className="w-10 h-10 text-[#C00000]" />
+          </div>
+          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Rol Seçimi</h1>
+          <p className="text-gray-500 mt-3 text-lg font-medium">Erişmek istediğiniz yetki alanını seçiniz</p>
         </div>
 
         {/* Role Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
           {roles.map((role) => {
             const config = ROLE_CONFIG[role];
             const Icon = config.icon;
@@ -86,25 +90,30 @@ export function RoleSwitchScreen({ roles, onSelectRole, onLogout }: RoleSwitchSc
             return (
               <Card
                 key={role}
-                className="p-6 cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1"
+                className="group relative overflow-hidden p-8 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 border-none ring-1 ring-gray-200"
                 onClick={() => onSelectRole(role)}
               >
-                <div className="flex flex-col items-center text-center space-y-4">
+                {/* Background Pattern */}
+                <div className="absolute -right-4 -bottom-4 opacity-5 transform rotate-12 transition-transform group-hover:rotate-0">
+                  <Icon className="w-32 h-32" />
+                </div>
+
+                <div className="relative z-10 flex flex-col items-center text-center space-y-6">
                   <div 
-                    className="w-16 h-16 rounded-full flex items-center justify-center"
+                    className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110"
                     style={{ backgroundColor: config.color }}
                   >
-                    <Icon className="w-8 h-8 text-white" />
+                    <Icon className="w-10 h-10 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-gray-900 mb-2">{config.title}</h3>
-                    <p className="text-sm text-gray-600">{config.description}</p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
+                    <p className="text-sm text-gray-500 leading-relaxed font-medium">{config.description}</p>
                   </div>
                   <Button 
-                    className="w-full"
+                    className="w-full h-11 font-bold shadow-md opacity-90 group-hover:opacity-100 transition-opacity"
                     style={{ backgroundColor: config.color }}
                   >
-                    Enter as {config.title.split(' ')[0]}
+                    {config.title} Olarak Gir
                   </Button>
                 </div>
               </Card>
@@ -114,10 +123,21 @@ export function RoleSwitchScreen({ roles, onSelectRole, onLogout }: RoleSwitchSc
 
         {/* Logout Button */}
         <div className="text-center">
-          <Button variant="outline" onClick={onLogout}>
-            Logout
+          <Button
+            variant="ghost"
+            onClick={onLogout}
+            className="text-gray-500 hover:text-gray-900 hover:bg-gray-200/50 font-bold transition-all px-8 py-6 h-auto rounded-xl"
+          >
+            <LogOut className="w-5 h-5 mr-2" />
+            Sistemden Güvenli Çıkış Yap
           </Button>
         </div>
+      </div>
+
+      <div className="text-center pb-8">
+        <p className="text-xs text-gray-400 font-medium uppercase tracking-widest">
+          Transfer Yönetim Sistemi • Çoklu Yetki Paneli
+        </p>
       </div>
     </div>
   );

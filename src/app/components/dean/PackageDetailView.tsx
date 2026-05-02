@@ -26,11 +26,11 @@ interface PackageDetailViewProps {
 
 const MOCK_PACKAGE = {
   id: 'PKG-2025-CE-001',
-  department: 'Computer Engineering',
-  semester: '3rd Semester',
-  period: 'Spring 2024-2025',
-  receivedDate: '2025-01-16',
-  receivedFrom: 'YGK - Computer Engineering',
+  department: 'Bilgisayar Mühendisliği',
+  semester: '3. Dönem',
+  period: 'Bahar 2024-2025',
+  receivedDate: '16/01/2025',
+  receivedFrom: 'YGK - Bilgisayar Mühendisliği',
   status: 'received_from_ygk',
   summary: {
     totalApplicants: 18,
@@ -40,21 +40,21 @@ const MOCK_PACKAGE = {
     quota: 8
   },
   documents: [
-    { name: 'Final Ranking List', status: 'complete', size: '245 KB' },
-    { name: 'Academic Evaluation Reports', status: 'complete', size: '1.2 MB' },
-    { name: 'Course Equivalence Tables', status: 'complete', size: '856 KB' },
-    { name: 'Language Verification Summary', status: 'complete', size: '124 KB' },
-    { name: 'YGK Commission Notes', status: 'complete', size: '89 KB' }
+    { name: 'Nihai Sıralama Listesi', status: 'tamam', size: '245 KB' },
+    { name: 'Akademik Değerlendirme Raporları', status: 'tamam', size: '1.2 MB' },
+    { name: 'Ders Muafiyet (İntibak) Tabloları', status: 'tamam', size: '856 KB' },
+    { name: 'Dil Yeterlilik Özeti', status: 'tamam', size: '124 KB' },
+    { name: 'YGK Komisyon Notları', status: 'tamam', size: '89 KB' }
   ],
   applicants: [
-    { rank: 1, name: 'Ahmet Yılmaz', score: 87.5, status: 'asil', intibak: 'complete' },
-    { rank: 2, name: 'Ayşe Demir', score: 85.2, status: 'asil', intibak: 'complete' },
-    { rank: 3, name: 'Fatma Şahin', score: 83.8, status: 'asil', intibak: 'complete' },
-    { rank: 4, name: 'Can Öztürk', score: 82.1, status: 'asil', intibak: 'complete' },
-    { rank: 5, name: 'Mustafa Çelik', score: 81.4, status: 'asil', intibak: 'complete' },
-    { rank: 6, name: 'Zeynep Kara', score: 80.3, status: 'asil', intibak: 'complete' },
-    { rank: 7, name: 'Burak Demir', score: 79.5, status: 'asil', intibak: 'complete' },
-    { rank: 8, name: 'Elif Yıldız', score: 78.2, status: 'asil', intibak: 'complete' }
+    { rank: 1, name: 'Ahmet Yılmaz', score: 87.5, status: 'asil', intibak: 'tamam' },
+    { rank: 2, name: 'Ayşe Demir', score: 85.2, status: 'asil', intibak: 'tamam' },
+    { rank: 3, name: 'Fatma Şahin', score: 83.8, status: 'asil', intibak: 'tamam' },
+    { rank: 4, name: 'Can Öztürk', score: 82.1, status: 'asil', intibak: 'tamam' },
+    { rank: 5, name: 'Mustafa Çelik', score: 81.4, status: 'asil', intibak: 'tamam' },
+    { rank: 6, name: 'Zeynep Kara', score: 80.3, status: 'asil', intibak: 'tamam' },
+    { rank: 7, name: 'Burak Demir', score: 79.5, status: 'asil', intibak: 'tamam' },
+    { rank: 8, name: 'Elif Yıldız', score: 78.2, status: 'asil', intibak: 'tamam' }
   ]
 };
 
@@ -66,7 +66,7 @@ export function PackageDetailView({ packageId, onBack }: PackageDetailViewProps)
 
   const handleForwardToBoard = () => {
     if (adminNotes.trim()) {
-      toast.success('Package forwarded to Faculty Board successfully');
+      toast.success('Paket başarıyla Fakülte Kurulu\'na sevk edildi');
       setShowForwardModal(false);
       onBack();
     }
@@ -74,7 +74,7 @@ export function PackageDetailView({ packageId, onBack }: PackageDetailViewProps)
 
   const handleRequestClarification = () => {
     if (clarificationRequest.trim()) {
-      toast.info('Clarification request sent to YGK');
+      toast.info('YGK\'dan ek bilgi talebi gönderildi');
       setShowClarificationModal(false);
       onBack();
     }
@@ -85,89 +85,89 @@ export function PackageDetailView({ packageId, onBack }: PackageDetailViewProps)
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-gray-900 mb-2">Evaluation Package Review</h1>
-          <p className="text-gray-600">{MOCK_PACKAGE.id} - {MOCK_PACKAGE.department}</p>
+          <h1 className="text-gray-900 mb-2 font-bold">Değerlendirme Paketi İncelemesi</h1>
+          <p className="text-gray-600 font-medium">{MOCK_PACKAGE.id} - {MOCK_PACKAGE.department}</p>
         </div>
         <Button variant="outline" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Packages
+          Paketlere Dön
         </Button>
       </div>
 
       {/* Package Status Banner */}
       <Alert>
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          <strong>Administrative Review Required:</strong> This package was received from YGK on {MOCK_PACKAGE.receivedDate}. 
-          Please review for administrative completeness before forwarding to Faculty Board.
+        <AlertDescription className="font-medium">
+          <strong>İdari İnceleme Bekliyor:</strong> Bu paket YGK tarafından {MOCK_PACKAGE.receivedDate} tarihinde gönderilmiştir.
+          Lütfen Fakülte Kurulu'na sevk etmeden önce idari eksiklik olup olmadığını kontrol ediniz.
         </AlertDescription>
       </Alert>
 
       {/* Package Summary */}
       <Card className="p-6">
-        <h2 className="text-gray-900 mb-4">Package Summary</h2>
+        <h2 className="text-gray-900 mb-4 font-bold">Paket Özeti</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 bg-gray-50 rounded-lg">
-            <div className="text-sm text-gray-600">Total Applicants</div>
-            <div className="text-2xl text-gray-900">{MOCK_PACKAGE.summary.totalApplicants}</div>
+            <div className="text-sm text-gray-600 mb-1">Toplam Başvuran</div>
+            <div className="text-2xl text-gray-900 font-bold">{MOCK_PACKAGE.summary.totalApplicants}</div>
           </div>
           <div className="p-4 bg-gray-50 rounded-lg">
-            <div className="text-sm text-gray-600">Eligible</div>
-            <div className="text-2xl text-gray-900">{MOCK_PACKAGE.summary.eligible}</div>
+            <div className="text-sm text-gray-600 mb-1">Uygun Bulunan</div>
+            <div className="text-2xl text-gray-900 font-bold">{MOCK_PACKAGE.summary.eligible}</div>
           </div>
           <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-            <div className="text-sm text-gray-600">Asil (Admitted)</div>
-            <div className="text-2xl text-green-600">{MOCK_PACKAGE.summary.asilCount}</div>
+            <div className="text-sm text-gray-600 mb-1">Asil Adaylar</div>
+            <div className="text-2xl text-green-600 font-bold">{MOCK_PACKAGE.summary.asilCount}</div>
           </div>
           <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-            <div className="text-sm text-gray-600">Yedek (Waitlist)</div>
-            <div className="text-2xl text-yellow-600">{MOCK_PACKAGE.summary.yedekCount}</div>
+            <div className="text-sm text-gray-600 mb-1">Yedek Adaylar</div>
+            <div className="text-2xl text-yellow-600 font-bold">{MOCK_PACKAGE.summary.yedekCount}</div>
           </div>
         </div>
 
         <div className="mt-4 pt-4 border-t border-gray-200 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
           <div>
-            <div className="text-gray-600">Department</div>
-            <div className="text-gray-900">{MOCK_PACKAGE.department}</div>
+            <div className="text-gray-500">Bölüm</div>
+            <div className="text-gray-900 font-medium">{MOCK_PACKAGE.department}</div>
           </div>
           <div>
-            <div className="text-gray-600">Semester Entry</div>
-            <div className="text-gray-900">{MOCK_PACKAGE.semester}</div>
+            <div className="text-gray-500">Giriş Dönemi</div>
+            <div className="text-gray-900 font-medium">{MOCK_PACKAGE.semester}</div>
           </div>
           <div>
-            <div className="text-gray-600">Academic Period</div>
-            <div className="text-gray-900">{MOCK_PACKAGE.period}</div>
+            <div className="text-gray-500">Akademik Dönem</div>
+            <div className="text-gray-900 font-medium">{MOCK_PACKAGE.period}</div>
           </div>
           <div>
-            <div className="text-gray-600">Received From</div>
-            <div className="text-gray-900">{MOCK_PACKAGE.receivedFrom}</div>
+            <div className="text-gray-500">Gönderen Birim</div>
+            <div className="text-gray-900 font-medium">{MOCK_PACKAGE.receivedFrom}</div>
           </div>
           <div>
-            <div className="text-gray-600">Received Date</div>
-            <div className="text-gray-900">{MOCK_PACKAGE.receivedDate}</div>
+            <div className="text-gray-500">Alınma Tarihi</div>
+            <div className="text-gray-900 font-medium">{MOCK_PACKAGE.receivedDate}</div>
           </div>
           <div>
-            <div className="text-gray-600">Department Quota</div>
-            <div className="text-gray-900">{MOCK_PACKAGE.summary.quota} positions</div>
+            <div className="text-gray-500">Bölüm Kontenjanı</div>
+            <div className="text-gray-900 font-medium">{MOCK_PACKAGE.summary.quota} Kişi</div>
           </div>
         </div>
       </Card>
 
       {/* Package Documents */}
       <Card className="p-6">
-        <h2 className="text-gray-900 mb-4">Package Documents</h2>
+        <h2 className="text-gray-900 mb-4 font-bold">Paket İçeriği (Belgeler)</h2>
         <div className="space-y-3">
           {MOCK_PACKAGE.documents.map((doc, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
               <div className="flex items-center space-x-3">
                 <FileText className="w-5 h-5 text-gray-600" />
                 <div>
-                  <div className="text-sm text-gray-900">{doc.name}</div>
-                  <div className="text-xs text-gray-500">Size: {doc.size}</div>
+                  <div className="text-sm text-gray-900 font-medium">{doc.name}</div>
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Boyut: {doc.size}</div>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <Badge className="bg-green-100 text-green-800 text-xs">
+                <Badge className="bg-green-100 text-green-800 text-[10px] font-bold uppercase tracking-wider">
                   <CheckCircle2 className="w-3 h-3 mr-1" />
                   {doc.status}
                 </Badge>
@@ -182,7 +182,7 @@ export function PackageDetailView({ packageId, onBack }: PackageDetailViewProps)
         <div className="mt-4 pt-4 border-t border-gray-200">
           <Button variant="outline" className="w-full">
             <Download className="w-4 h-4 mr-2" />
-            Download Complete Package (ZIP)
+            Tüm Paketi İndir (ZIP)
           </Button>
         </div>
       </Card>
@@ -190,36 +190,36 @@ export function PackageDetailView({ packageId, onBack }: PackageDetailViewProps)
       {/* Admitted Students Preview */}
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-gray-900">Admitted Students (Asil List)</h2>
-          <Badge className="bg-green-100 text-green-800">
-            {MOCK_PACKAGE.applicants.length} Students
+          <h2 className="text-gray-900 font-bold">Kabul Edilen Öğrenciler (Asil Liste)</h2>
+          <Badge className="bg-green-100 text-green-800 border-green-200">
+            {MOCK_PACKAGE.applicants.length} Öğrenci
           </Badge>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 text-sm text-gray-700">Rank</th>
-                <th className="text-left py-3 px-4 text-sm text-gray-700">Student Name</th>
-                <th className="text-left py-3 px-4 text-sm text-gray-700">Transfer Score</th>
-                <th className="text-left py-3 px-4 text-sm text-gray-700">Status</th>
-                <th className="text-left py-3 px-4 text-sm text-gray-700">İntibak</th>
+              <tr className="border-b border-gray-200 text-xs font-bold uppercase text-gray-500">
+                <th className="text-left py-3 px-4">Sıra</th>
+                <th className="text-left py-3 px-4">Öğrenci Adı</th>
+                <th className="text-left py-3 px-4">Transfer Puanı</th>
+                <th className="text-left py-3 px-4">Durum</th>
+                <th className="text-left py-3 px-4">İntibak</th>
               </tr>
             </thead>
             <tbody>
               {MOCK_PACKAGE.applicants.map((student) => (
-                <tr key={student.rank} className="border-b border-gray-100 bg-green-50">
-                  <td className="py-3 px-4 text-sm">{student.rank}</td>
-                  <td className="py-3 px-4 text-sm text-gray-900">{student.name}</td>
-                  <td className="py-3 px-4 text-sm">{student.score}</td>
+                <tr key={student.rank} className="border-b border-gray-100 bg-green-50/30 hover:bg-green-50 transition-colors">
+                  <td className="py-3 px-4 text-sm font-bold">{student.rank}</td>
+                  <td className="py-3 px-4 text-sm text-gray-900 font-medium">{student.name}</td>
+                  <td className="py-3 px-4 text-sm font-mono font-bold text-[#C00000]">{student.score.toFixed(2)}</td>
                   <td className="py-3 px-4">
-                    <Badge className="bg-green-100 text-green-800 text-xs">Asil</Badge>
+                    <Badge className="bg-green-100 text-green-800 text-[10px] font-bold">ASİL</Badge>
                   </td>
                   <td className="py-3 px-4">
-                    <Badge className="bg-blue-100 text-blue-800 text-xs">
+                    <Badge className="bg-blue-100 text-blue-800 text-[10px] font-bold uppercase tracking-wider">
                       <CheckCircle2 className="w-3 h-3 mr-1" />
-                      Complete
+                      HAZIR
                     </Badge>
                   </td>
                 </tr>
@@ -232,83 +232,83 @@ export function PackageDetailView({ packageId, onBack }: PackageDetailViewProps)
       {/* Comments Panel */}
       <CommentsPanel 
         applicationId={packageId}
-        currentUserRole="Dean's Office"
+        currentUserRole="Dekanlık"
       />
 
       {/* Action Buttons */}
       <Card className="p-6">
-        <h2 className="text-gray-900 mb-4">Administrative Actions</h2>
+        <h2 className="text-gray-900 mb-4 font-bold">İdari İşlemler</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Button 
             variant="outline"
-            className="h-auto py-4 flex flex-col items-center space-y-2"
+            className="h-auto py-4 flex flex-col items-center space-y-2 hover:bg-gray-50"
             onClick={() => setShowClarificationModal(true)}
           >
-            <MessageSquare className="w-6 h-6" />
-            <div>
-              <div className="text-sm">Request Clarification</div>
-              <div className="text-xs text-gray-500">Send back to YGK for additional info</div>
+            <MessageSquare className="w-6 h-6 text-gray-600" />
+            <div className="text-center">
+              <div className="text-sm font-bold">Bilgi / Revizyon Talebi</div>
+              <div className="text-xs text-gray-500 mt-1">YGK'ya geri gönder</div>
             </div>
           </Button>
 
           <Button 
-            className="h-auto py-4 flex flex-col items-center space-y-2"
+            className="h-auto py-4 flex flex-col items-center space-y-2 shadow-lg shadow-red-100"
             style={{ backgroundColor: '#6B1313' }}
             onClick={() => setShowForwardModal(true)}
           >
             <Send className="w-6 h-6" />
-            <div>
-              <div className="text-sm">Forward to Faculty Board</div>
-              <div className="text-xs opacity-80">Approve administrative completeness</div>
+            <div className="text-center">
+              <div className="text-sm font-bold">Fakülte Kurulu'na Sevk Et</div>
+              <div className="text-xs opacity-80 mt-1">İdari uygunluğu onayla ve ilet</div>
             </div>
           </Button>
         </div>
       </Card>
 
-      {/* Forward to Board Modal */}
+      {/* Forward Modal */}
       <Dialog open={showForwardModal} onOpenChange={setShowForwardModal}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Forward Package to Faculty Board</DialogTitle>
+            <DialogTitle>Paketi Fakülte Kurulu'na Sevk Et</DialogTitle>
             <DialogDescription>
-              This action will send the evaluation package to the Faculty Board for final approval.
+              Bu işlem değerlendirme paketini nihai onay için Fakülte Yönetim Kurulu'na iletecektir.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <Alert>
               <CheckCircle2 className="h-4 w-4" />
-              <AlertDescription>
-                Administrative review complete. All required documents are present and the evaluation appears complete.
+              <AlertDescription className="text-sm font-medium">
+                İdari inceleme tamamlandı. Gerekli tüm belgeler mevcut ve değerlendirme süreci kurallara uygun görünmektedir.
               </AlertDescription>
             </Alert>
 
             <div className="space-y-2">
-              <Label htmlFor="adminNotes">Dean's Office Notes for Faculty Board *</Label>
+              <Label htmlFor="adminNotes">Fakülte Kurulu İçin Dekanlık Notu *</Label>
               <Textarea
                 id="adminNotes"
                 rows={4}
-                placeholder="Provide administrative notes or recommendations for the Faculty Board..."
+                placeholder="Fakülte Kurulu üyeleri için idari notlar veya tavsiyeler ekleyin..."
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
               />
-              <p className="text-xs text-gray-500">
-                These notes will be visible to Faculty Board members during their review.
+              <p className="text-xs text-gray-500 italic">
+                Bu notlar kurul üyeleri tarafından inceleme sırasında görülebilecektir.
               </p>
             </div>
 
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="text-sm text-gray-900 mb-2">Faculty Board will be notified:</div>
+              <div className="text-sm text-gray-900 mb-2 font-bold">Sevk İşlemi Sonrası:</div>
               <ul className="text-xs text-gray-600 space-y-1">
-                <li>✓ Email notification to all Faculty Board members</li>
-                <li>✓ Package will appear in their pending queue</li>
-                <li>✓ All attached documents will be accessible</li>
+                <li>✓ Tüm Kurul Üyelerine e-posta bildirimi gönderilir</li>
+                <li>✓ Paket Kurul'un inceleme kuyruğuna düşer</li>
+                <li>✓ Tüm ekli belgelere erişim yetkisi verilir</li>
               </ul>
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
               <Button variant="outline" onClick={() => setShowForwardModal(false)}>
-                Cancel
+                İptal
               </Button>
               <Button 
                 onClick={handleForwardToBoard}
@@ -316,30 +316,30 @@ export function PackageDetailView({ packageId, onBack }: PackageDetailViewProps)
                 style={{ backgroundColor: '#6B1313' }}
               >
                 <Send className="w-4 h-4 mr-2" />
-                Forward to Board
+                Kurula Gönder
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Request Clarification Modal */}
+      {/* Clarification Modal */}
       <Dialog open={showClarificationModal} onOpenChange={setShowClarificationModal}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Request Clarification from YGK</DialogTitle>
+            <DialogTitle>YGK'dan Bilgi / Revizyon Talebi</DialogTitle>
             <DialogDescription>
-              Send this package back to YGK with specific questions or requests for additional information.
+              Bu paketi YGK'ya spesifik sorularınız veya revizyon taleplerinizle birlikte geri gönderin.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="clarification">Clarification Request *</Label>
+              <Label htmlFor="clarification">Revizyon Talebi Detayları *</Label>
               <Textarea
                 id="clarification"
                 rows={5}
-                placeholder="Specify what information or clarification is needed from YGK..."
+                placeholder="YGK'dan talep edilen ek bilgileri veya düzeltilmesi gereken noktaları belirtin..."
                 value={clarificationRequest}
                 onChange={(e) => setClarificationRequest(e.target.value)}
               />
@@ -347,22 +347,22 @@ export function PackageDetailView({ packageId, onBack }: PackageDetailViewProps)
 
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                This action will return the package to YGK and delay the Faculty Board review process.
+              <AlertDescription className="text-sm">
+                Bu işlem paketi YGK'ya geri döndürecek ve Fakülte Kurulu inceleme sürecini geciktirecektir.
               </AlertDescription>
             </Alert>
 
             <div className="flex justify-end space-x-3 pt-4">
               <Button variant="outline" onClick={() => setShowClarificationModal(false)}>
-                Cancel
+                İptal
               </Button>
               <Button 
                 onClick={handleRequestClarification}
                 disabled={!clarificationRequest.trim()}
-                variant="outline"
+                variant="destructive"
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
-                Send Clarification Request
+                Revizyon Talebini Gönder
               </Button>
             </div>
           </div>

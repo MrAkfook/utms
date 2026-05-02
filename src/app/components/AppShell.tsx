@@ -12,7 +12,9 @@ import {
   Settings,
   BarChart3,
   Menu,
-  X
+  X,
+  User as UserIcon,
+  RefreshCw
 } from 'lucide-react';
 import type { User, UserRole } from '../App';
 
@@ -28,54 +30,54 @@ interface AppShellProps {
 
 const NAVIGATION_ITEMS: Record<UserRole, { icon: React.ElementType; label: string; section: string }[]> = {
   Student: [
-    { icon: LayoutDashboard, label: 'Dashboard', section: 'dashboard' },
-    { icon: FileText, label: 'My Applications', section: 'applications' },
-    { icon: Eye, label: 'Track Status', section: 'track' },
-    { icon: Settings, label: 'Settings', section: 'settings' }
+    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' },
+    { icon: FileText, label: 'Başvurularım', section: 'applications' },
+    { icon: Eye, label: 'Süreç Takibi', section: 'track' },
+    { icon: Settings, label: 'Ayarlar', section: 'settings' }
   ],
   OIDB: [
-    { icon: LayoutDashboard, label: 'Dashboard', section: 'dashboard' },
-    { icon: List, label: 'Application Pipeline', section: 'pipeline' },
-    { icon: FileText, label: 'Intake Queue', section: 'intake' },
-    { icon: Eye, label: 'Appeals', section: 'appeals' },
-    { icon: BarChart3, label: 'Reports', section: 'reports' },
-    { icon: Settings, label: 'Settings', section: 'settings' }
+    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' },
+    { icon: List, label: 'Süreç Takibi', section: 'pipeline' },
+    { icon: FileText, label: 'Başvuru Kuyruğu', section: 'intake' },
+    { icon: Eye, label: 'İtirazlar', section: 'appeals' },
+    { icon: BarChart3, label: 'Raporlar', section: 'reports' },
+    { icon: Settings, label: 'Ayarlar', section: 'settings' }
   ],
   YDYO: [
-    { icon: LayoutDashboard, label: 'Dashboard', section: 'dashboard' },
-    { icon: List, label: 'Review Queue', section: 'queue' },
-    { icon: FileText, label: 'Decisions', section: 'decisions' },
-    { icon: BarChart3, label: 'Reports', section: 'reports' },
-    { icon: Settings, label: 'Settings', section: 'settings' }
+    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' },
+    { icon: List, label: 'İnceleme Kuyruğu', section: 'queue' },
+    { icon: FileText, label: 'Kararlar', section: 'decisions' },
+    { icon: BarChart3, label: 'Raporlar', section: 'reports' },
+    { icon: Settings, label: 'Ayarlar', section: 'settings' }
   ],
   YGK: [
-    { icon: LayoutDashboard, label: 'Dashboard', section: 'dashboard' },
-    { icon: List, label: 'Applicants', section: 'applicants' },
-    { icon: Eye, label: 'Evaluations', section: 'evaluations' },
-    { icon: BarChart3, label: 'Rankings', section: 'rankings' },
-    { icon: FileText, label: 'İntibak', section: 'intibak' },
-    { icon: Settings, label: 'Settings', section: 'settings' }
+    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' },
+    { icon: List, label: 'Aday Listesi', section: 'applicants' },
+    { icon: Eye, label: 'Değerlendirmeler', section: 'evaluations' },
+    { icon: BarChart3, label: 'Sıralamalar', section: 'rankings' },
+    { icon: FileText, label: 'İntibak İşlemleri', section: 'intibak' },
+    { icon: Settings, label: 'Ayarlar', section: 'settings' }
   ],
   Dean: [
-    { icon: LayoutDashboard, label: 'Dashboard', section: 'dashboard' },
-    { icon: List, label: 'Packages', section: 'packages' },
-    { icon: Eye, label: 'Review', section: 'review' },
-    { icon: BarChart3, label: 'Reports', section: 'reports' },
-    { icon: Settings, label: 'Settings', section: 'settings' }
+    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' },
+    { icon: List, label: 'Paketler', section: 'packages' },
+    { icon: Eye, label: 'İnceleme', section: 'review' },
+    { icon: BarChart3, label: 'Raporlar', section: 'reports' },
+    { icon: Settings, label: 'Ayarlar', section: 'settings' }
   ],
   Board: [
-    { icon: LayoutDashboard, label: 'Dashboard', section: 'dashboard' },
-    { icon: List, label: 'Pending Packages', section: 'packages' },
-    { icon: Eye, label: 'Decisions', section: 'decisions' },
-    { icon: BarChart3, label: 'Reports', section: 'reports' }
+    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' },
+    { icon: List, label: 'Bekleyen Paketler', section: 'packages' },
+    { icon: Eye, label: 'Kararlar', section: 'decisions' },
+    { icon: BarChart3, label: 'Raporlar', section: 'reports' }
   ],
   Admin: [
-    { icon: LayoutDashboard, label: 'Dashboard', section: 'dashboard' },
-    { icon: FileText, label: 'Users & Roles', section: 'users' },
-    { icon: List, label: 'Periods & Quotas', section: 'periods' },
-    { icon: Settings, label: 'System Settings', section: 'settings' },
-    { icon: Eye, label: 'Integrations', section: 'integrations' },
-    { icon: BarChart3, label: 'Monitoring', section: 'monitoring' }
+    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' },
+    { icon: FileText, label: 'Kullanıcı & Rol', section: 'users' },
+    { icon: List, label: 'Dönem & Kontenjan', section: 'periods' },
+    { icon: Settings, label: 'Sistem Ayarları', section: 'settings' },
+    { icon: Eye, label: 'Entegrasyonlar', section: 'integrations' },
+    { icon: BarChart3, label: 'İzleme', section: 'monitoring' }
   ]
 };
 
@@ -94,32 +96,32 @@ export function AppShell({
   const navigationItems = NAVIGATION_ITEMS[currentRole] || [];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex font-sans">
       {/* Sidebar */}
       <aside 
-        className={`${sidebarOpen ? 'w-64' : 'w-0'} transition-all duration-300 bg-white border-r border-gray-200 flex flex-col overflow-hidden`}
+        className={`${sidebarOpen ? 'w-64' : 'w-0'} transition-all duration-300 bg-white border-r border-gray-200 flex flex-col overflow-hidden z-40`}
       >
         {/* Logo Area */}
-        <div className="h-16 flex items-center px-6 border-b border-gray-200">
+        <div className="h-16 flex items-center px-6 border-b border-gray-200 shrink-0">
           <div 
-            className="w-10 h-10 rounded flex items-center justify-center mr-3"
+            className="w-10 h-10 rounded-lg flex items-center justify-center mr-3 shadow-md transform -rotate-3"
             style={{ backgroundColor: '#C00000' }}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
               <path d="M12 14l9-5-9-5-9 5 9 5z" />
               <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
             </svg>
           </div>
           {sidebarOpen && (
-            <div className="flex-1">
-              <div className="text-sm text-gray-900">Transfer Portal</div>
-              <div className="text-xs text-gray-500">{currentRole}</div>
+            <div className="flex-1 overflow-hidden">
+              <div className="text-sm font-bold text-gray-900 truncate uppercase tracking-tighter">Transfer Portal</div>
+              <div className="text-[10px] font-bold text-[#C00000] uppercase tracking-widest leading-none">{currentRole}</div>
             </div>
           )}
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 py-4 overflow-y-auto">
+        <nav className="flex-1 py-6 overflow-y-auto space-y-1">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentSection === item.section;
@@ -127,15 +129,14 @@ export function AppShell({
               <button
                 key={item.section}
                 onClick={() => onNavigate?.(item.section)}
-                className={`w-full flex items-center px-6 py-3 text-sm transition-colors ${
+                className={`w-full flex items-center px-6 py-3 text-sm font-medium transition-all group ${
                   isActive 
-                    ? 'bg-red-50 text-gray-900 border-r-2' 
-                    : 'text-gray-600 hover:bg-gray-50'
+                    ? 'bg-red-50 text-[#C00000] border-r-4 border-[#C00000]'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                 }`}
-                style={isActive ? { borderRightColor: '#C00000' } : undefined}
               >
-                <Icon className={`w-5 h-5 ${isActive ? '' : 'text-gray-400'}`} />
-                {sidebarOpen && <span className="ml-3">{item.label}</span>}
+                <Icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? '' : 'text-gray-400 group-hover:text-[#C00000]'}`} />
+                {sidebarOpen && <span className="ml-3 truncate">{item.label}</span>}
               </button>
             );
           })}
@@ -143,88 +144,113 @@ export function AppShell({
 
         {/* Period Info */}
         {sidebarOpen && (
-          <div className="p-4 border-t border-gray-200">
-            <div className="text-xs text-gray-600 mb-1">Active Period</div>
-            <div className="text-sm text-gray-900">Spring 2024-2025</div>
-            <div className="text-xs text-gray-500 mt-1">Ends: Jan 15, 2025</div>
+          <div className="p-4 m-4 bg-gray-50 rounded-xl border border-gray-100">
+            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Aktif Dönem</div>
+            <div className="text-xs font-bold text-gray-900">Bahar 2024-2025</div>
+            <div className="text-[10px] text-red-600 font-medium mt-1">Bitiş: 15 Ocak 2025</div>
           </div>
         )}
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Top Navigation Bar */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center px-6">
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center px-6 sticky top-0 z-30">
           <button 
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-gray-100 rounded mr-4"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500"
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
           <div className="flex-1" />
 
-          {/* Notifications */}
-          <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded mr-4">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full" style={{ backgroundColor: '#C00000' }}></span>
-          </button>
+          {/* Quick Stats or Search could go here */}
 
-          {/* User Menu */}
-          <div className="relative">
-            <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded"
-            >
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm" style={{ backgroundColor: '#C00000' }}>
-                {user.name[0]}{user.surname[0]}
-              </div>
-              <div className="text-left hidden md:block">
-                <div className="text-sm text-gray-900">{user.name} {user.surname}</div>
-                <div className="text-xs text-gray-500">{currentRole}</div>
-              </div>
-              <ChevronDown className="w-4 h-4 text-gray-600" />
+          <div className="flex items-center space-x-2">
+            {/* Notifications */}
+            <button className="relative p-2 text-gray-400 hover:text-[#C00000] hover:bg-red-50 rounded-lg transition-all">
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full border-2 border-white bg-[#C00000]"></span>
             </button>
 
-            {/* Dropdown Menu */}
-            {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                <div className="px-4 py-3 border-b border-gray-200">
-                  <div className="text-sm text-gray-900">{user.name} {user.surname}</div>
-                  <div className="text-xs text-gray-500">{user.email}</div>
-                  <Badge className="mt-2 text-xs" style={{ backgroundColor: '#C00000' }}>
-                    {currentRole}
-                  </Badge>
+            {/* User Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center space-x-3 p-1.5 hover:bg-gray-50 rounded-xl transition-all border border-transparent hover:border-gray-100"
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-md transform rotate-3" style={{ backgroundColor: '#C00000' }}>
+                  {user.name[0]}{user.surname[0]}
                 </div>
-                {onSwitchRole && (
-                  <button
-                    onClick={() => {
-                      setShowUserMenu(false);
-                      onSwitchRole();
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Switch Role
-                  </button>
-                )}
-                <button
-                  onClick={() => {
-                    setShowUserMenu(false);
-                    onLogout();
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </button>
-              </div>
-            )}
+                <div className="text-left hidden lg:block">
+                  <div className="text-xs font-bold text-gray-900 leading-none">{user.name} {user.surname}</div>
+                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mt-1">{currentRole}</div>
+                </div>
+                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${showUserMenu ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Dropdown Menu */}
+              {showUserMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowUserMenu(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="text-sm font-bold text-gray-900">{user.name} {user.surname}</div>
+                      <div className="text-xs font-medium text-gray-500 truncate">{user.email}</div>
+                      <Badge className="mt-2 text-[10px] font-bold uppercase tracking-wider border-none bg-red-50 text-[#C00000]">
+                        {currentRole}
+                      </Badge>
+                    </div>
+
+                    <div className="p-1">
+                      {onSwitchRole && (
+                        <button
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            onSwitchRole();
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-[#C00000] rounded-lg transition-colors flex items-center"
+                        >
+                          <RefreshCw className="w-4 h-4 mr-2 opacity-70" />
+                          Rol Değiştir
+                        </button>
+                      )}
+                      <button
+                        className="w-full text-left px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg transition-colors flex items-center"
+                      >
+                        <UserIcon className="w-4 h-4 mr-2 opacity-70" />
+                        Profil Ayarları
+                      </button>
+                    </div>
+
+                    <div className="p-1 mt-1 border-t border-gray-100">
+                      <button
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          onLogout();
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center"
+                      >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Güvenli Çıkış
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
+        <main className="flex-1 overflow-y-auto p-4 lg:p-8">
+          <div className="max-w-6xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>

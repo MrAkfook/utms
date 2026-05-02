@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Layout } from '../Layout';
+import { AppShell } from '../AppShell';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Building2, Send, Eye, FileText } from 'lucide-react';
+import { Building2, Send, Eye, FileText, ArrowLeft } from 'lucide-react';
 import type { User } from '../../App';
 import { PackageDetailView } from './PackageDetailView';
 import { toast } from 'sonner';
@@ -15,6 +15,7 @@ interface DeanDashboardProps {
 }
 
 type DeanView = 'dashboard' | 'package-detail';
+type Section = 'dashboard' | 'packages' | 'review' | 'reports' | 'settings';
 
 // Mock packages data
 const MOCK_PACKAGES = [
@@ -61,6 +62,7 @@ const MOCK_PACKAGES = [
 ];
 
 export function DeanDashboard({ user, onLogout, onSwitchRole }: DeanDashboardProps) {
+  const [currentSection, setCurrentSection] = useState<Section>('dashboard');
   const [currentView, setCurrentView] = useState<DeanView>('dashboard');
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
 
@@ -69,41 +71,45 @@ export function DeanDashboard({ user, onLogout, onSwitchRole }: DeanDashboardPro
     setCurrentView('package-detail');
   };
 
-  if (currentView === 'package-detail' && selectedPackage) {
-    return (
-      <Layout user={user} currentRole="Dean" onLogout={onLogout} onSwitchRole={onSwitchRole}>
-        <PackageDetailView
-          packageId={selectedPackage}
-          onBack={() => setCurrentView('dashboard')}
-        />
-      </Layout>
-    );
-  }
-
-  const receivedCount = MOCK_PACKAGES.filter(p => p.status === 'received_from_ygk').length;
-  const reviewedCount = MOCK_PACKAGES.filter(p => p.status === 'reviewed').length;
-  const sentCount = MOCK_PACKAGES.filter(p => p.status === 'sent_to_board').length;
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'received_from_ygk':
-        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">Awaiting Review</Badge>;
-      case 'reviewed':
-        return <Badge className="bg-blue-100 text-blue-800 border-blue-300">Reviewed</Badge>;
-      case 'sent_to_board':
-        return <Badge className="bg-green-100 text-green-800 border-green-300">Sent to Board</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
+  const renderDashboardContent = () => {
+    if (currentView === 'package-detail' && selectedPackage) {
+      return (
+        <div className="space-y-4">
+          <Button variant="ghost" onClick={() => setCurrentView('dashboard')} className="mb-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Geri Dön
+          </Button>
+          <PackageDetailView
+            packageId={selectedPackage}
+            onBack={() => setCurrentView('dashboard')}
+          />
+        </div>
+      );
     }
-  };
 
-  return (
-    <Layout user={user} currentRole="Dean" onLogout={onLogout} onSwitchRole={onSwitchRole}>
+    const receivedCount = MOCK_PACKAGES.filter(p => p.status === 'received_from_ygk').length;
+    const reviewedCount = MOCK_PACKAGES.filter(p => p.status === 'reviewed').length;
+    const sentCount = MOCK_PACKAGES.filter(p => p.status === 'sent_to_board').length;
+
+    const getStatusBadge = (status: string) => {
+      switch (status) {
+        case 'received_from_ygk':
+          return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">İnceleme Bekliyor</Badge>;
+        case 'reviewed':
+          return <Badge className="bg-blue-100 text-blue-800 border-blue-300">İncelendi</Badge>;
+        case 'sent_to_board':
+          return <Badge className="bg-green-100 text-green-800 border-green-300">Kurula Gönderildi</Badge>;
+        default:
+          return <Badge>{status}</Badge>;
+      }
+    };
+
+    return (
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-gray-900 mb-2">Dean's Office Dashboard</h1>
-          <p className="text-gray-600">Faculty Transfer Package Review & Approval</p>
+          <h1 className="text-gray-900 mb-2">Dekanlık Paneli</h1>
+          <p className="text-gray-600">Fakülte Transfer Paketleri İnceleme ve Onay</p>
         </div>
 
         {/* Statistics Cards */}
@@ -111,7 +117,7 @@ export function DeanDashboard({ user, onLogout, onSwitchRole }: DeanDashboardPro
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Awaiting Review</div>
+                <div className="text-sm text-gray-600 mb-1">İnceleme Bekleyen</div>
                 <div className="text-2xl text-gray-900">{receivedCount}</div>
               </div>
               <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
@@ -123,7 +129,7 @@ export function DeanDashboard({ user, onLogout, onSwitchRole }: DeanDashboardPro
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Reviewed</div>
+                <div className="text-sm text-gray-600 mb-1">İncelenen</div>
                 <div className="text-2xl text-gray-900">{reviewedCount}</div>
               </div>
               <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
@@ -135,7 +141,7 @@ export function DeanDashboard({ user, onLogout, onSwitchRole }: DeanDashboardPro
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Sent to Board</div>
+                <div className="text-sm text-gray-600 mb-1">Kurula Gönderilen</div>
                 <div className="text-2xl text-gray-900">{sentCount}</div>
               </div>
               <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -147,7 +153,7 @@ export function DeanDashboard({ user, onLogout, onSwitchRole }: DeanDashboardPro
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Total Packages</div>
+                <div className="text-sm text-gray-600 mb-1">Toplam Paket</div>
                 <div className="text-2xl text-gray-900">{MOCK_PACKAGES.length}</div>
               </div>
               <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C00000' }}>
@@ -160,9 +166,9 @@ export function DeanDashboard({ user, onLogout, onSwitchRole }: DeanDashboardPro
         {/* Department Packages Table */}
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg text-gray-900">Department Packages</h2>
+            <h2 className="text-lg text-gray-900">Bölüm Paketleri</h2>
             <Badge className="bg-gray-100 text-gray-700 border-gray-300">
-              Spring 2024-2025
+              Bahar 2024-2025
             </Badge>
           </div>
 
@@ -180,19 +186,19 @@ export function DeanDashboard({ user, onLogout, onSwitchRole }: DeanDashboardPro
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <div className="text-gray-600">Package ID</div>
+                        <div className="text-gray-600">Paket ID</div>
                         <div className="text-gray-900">{pkg.id}</div>
                       </div>
                       <div>
-                        <div className="text-gray-600">Semester</div>
+                        <div className="text-gray-600">Dönem</div>
                         <div className="text-gray-900">{pkg.semester}</div>
                       </div>
                       <div>
-                        <div className="text-gray-600">Applicants</div>
+                        <div className="text-gray-600">Başvuranlar</div>
                         <div className="text-gray-900">{pkg.applicantCount}</div>
                       </div>
                       <div>
-                        <div className="text-gray-600">Received</div>
+                        <div className="text-gray-600">Alınma Tarihi</div>
                         <div className="text-gray-900">{pkg.receivedDate}</div>
                       </div>
                     </div>
@@ -204,7 +210,7 @@ export function DeanDashboard({ user, onLogout, onSwitchRole }: DeanDashboardPro
                       onClick={() => handleViewPackage(pkg.id)}
                     >
                       <Eye className="w-4 h-4 mr-2" />
-                      Review
+                      İncele
                     </Button>
                   </div>
                 </div>
@@ -218,15 +224,31 @@ export function DeanDashboard({ user, onLogout, onSwitchRole }: DeanDashboardPro
           <div className="flex gap-3">
             <FileText className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-blue-900 mb-1">Review Process</h3>
+              <h3 className="text-blue-900 mb-1">İnceleme Süreci</h3>
               <p className="text-sm text-blue-800">
-                Review department packages from YGK, verify ranking lists and course equivalence tables,
-                add dean's notes if needed, and forward to Faculty Board for final approval.
+                YGK'dan gelen bölüm paketlerini inceleyin, sıralama listelerini ve intibak tablolarını doğrulayın,
+                gerekirse dekanlık notu ekleyin ve nihai onay için Fakülte Yönetim Kurulu'na sevk edin.
               </p>
             </div>
           </div>
         </Card>
       </div>
-    </Layout>
+    );
+  };
+
+  return (
+    <AppShell
+      user={user}
+      currentRole="Dean"
+      onLogout={onLogout}
+      onSwitchRole={onSwitchRole}
+      currentSection={currentSection}
+      onNavigate={(section) => {
+        setCurrentSection(section as Section);
+        setCurrentView('dashboard');
+      }}
+    >
+      {renderDashboardContent()}
+    </AppShell>
   );
 }

@@ -36,7 +36,7 @@ type StudentView =
   | 'view-result'
   | 'submit-appeal';
 
-type Section = 'dashboard' | 'applications' | 'track' | 'settings';
+type Section = 'dashboard';
 
 // Mock applications data
 const MOCK_APPLICATIONS = [
@@ -354,6 +354,7 @@ export function StudentDashboard({ user, onLogout, onSwitchRole }: StudentDashbo
       onNavigate={(section) => {
         setCurrentSection(section as Section);
         setCurrentView('dashboard');
+        setSelectedAppId(null);
       }}
     >
       {renderDashboardContent()}

@@ -22,7 +22,7 @@ interface YGKDashboardProps {
   onSwitchRole?: () => void;
 }
 
-type Section = 'dashboard' | 'applicants' | 'evaluations' | 'rankings' | 'intibak' | 'settings';
+type Section = 'dashboard' | 'evaluations' | 'rankings' | 'intibak';
 type YGKView = 'dashboard' | 'eligibility' | 'ranking' | 'intibak';
 
 export function YGKDashboard({ user, onLogout, onSwitchRole }: YGKDashboardProps) {
@@ -253,7 +253,15 @@ export function YGKDashboard({ user, onLogout, onSwitchRole }: YGKDashboardProps
       currentSection={currentSection}
       onNavigate={(section) => {
         setCurrentSection(section as Section);
-        setCurrentView('dashboard');
+        if (section === 'dashboard') {
+          setCurrentView('dashboard');
+        } else if (section === 'evaluations') {
+          setCurrentView('eligibility');
+        } else if (section === 'rankings') {
+          setCurrentView('ranking');
+        } else if (section === 'intibak') {
+          setCurrentView('intibak');
+        }
       }}
     >
       {renderDashboardContent()}

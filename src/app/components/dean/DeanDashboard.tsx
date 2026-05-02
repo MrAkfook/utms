@@ -15,7 +15,7 @@ interface DeanDashboardProps {
 }
 
 type DeanView = 'dashboard' | 'package-detail';
-type Section = 'dashboard' | 'packages' | 'review' | 'reports' | 'settings';
+type Section = 'dashboard';
 
 // Mock packages data
 const MOCK_PACKAGES = [

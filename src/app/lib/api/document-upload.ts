@@ -43,6 +43,23 @@ async function handleResponse<T>(res: Response): Promise<T> {
   throw new Error(body.message ?? `HTTP ${res.status}`);
 }
 
+export interface ApplicationSummaryDto {
+  applicationId: string;
+  targetDepartmentId: string;
+  targetFacultyId: string;
+  currentStatus: string;
+  submittedAt: string;
+  lastModifiedAt: string;
+  uploadedDocumentCount: number;
+}
+
+export async function listApplications(userId: string): Promise<ApplicationSummaryDto[]> {
+  const res = await fetch(`${BASE}/applications`, {
+    headers: authHeaders(userId),
+  });
+  return handleResponse(res);
+}
+
 export async function createApplication(
   userId: string,
   data: {

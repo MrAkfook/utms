@@ -16,7 +16,39 @@ export interface CreateApplicationDto {
   currentDepartment?: string;
 }
 
+export interface ApplicationSummaryDto {
+  applicationId: string;
+  targetDepartmentId: string;
+  targetFacultyId: string;
+  currentStatus: string;
+  submittedAt: string;
+  lastModifiedAt: string;
+  uploadedDocumentCount: number;
+}
+
 export class ApplicationService {
+  async listByStudent(studentId: string): Promise<ApplicationSummaryDto[]> {
+    const apps = await prisma.application.findMany({
+      where: { studentId },
+      include: {
+        documents: {
+          include: { versions: { where: { isActive: true } } },
+        },
+      },
+      orderBy: { submittedAt: "desc" },
+    });
+
+    return apps.map((a) => ({
+      applicationId: a.applicationId,
+      targetDepartmentId: a.targetDepartmentId,
+      targetFacultyId: a.targetFacultyId,
+      currentStatus: a.currentStatus,
+      submittedAt: a.submittedAt.toISOString(),
+      lastModifiedAt: a.lastModifiedAt.toISOString(),
+      uploadedDocumentCount: a.documents.filter((d) => d.versions.length > 0).length,
+    }));
+  }
+
   async create(studentId: string, dto: CreateApplicationDto): Promise<{ applicationId: string }> {
     const application = await prisma.application.create({
       data: {

@@ -8,6 +8,16 @@ export function buildApplicationRouter(): Router {
   const service = new ApplicationService();
   const r = Router();
 
+  r.get("/", requireRoles(UserRole.Student, UserRole.SystemAdmin), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.authUser) throw new UnauthorizedError();
+      const apps = await service.listByStudent(req.authUser.userId);
+      res.json(apps);
+    } catch (e) {
+      next(e);
+    }
+  });
+
   r.post("/", requireRoles(UserRole.Student, UserRole.SystemAdmin), async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.authUser) throw new UnauthorizedError();

@@ -3,7 +3,8 @@
 // also serves the backend API in the same deployment.
 // pnpm workspace installs backend/node_modules during "pnpm install",
 // so all Express / Prisma / Blob deps are available here.
-import { createApp } from "../backend/src/app";
+// backend/dist is compiled during Vercel build (see vercel.json buildCommand)
+import { createApp } from "../backend/dist/app.js";
 
 const { app } = createApp();
 

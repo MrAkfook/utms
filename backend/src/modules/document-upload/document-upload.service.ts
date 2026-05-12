@@ -1,4 +1,3 @@
-import { put } from "@vercel/blob";
 import { prisma } from "../../shared/prisma-client";
 import { ApplicationStatus, DocumentType, UserRole } from "../../shared/types";
 import {
@@ -139,25 +138,14 @@ function standardizedFileName(
   return `${applicationId}_${documentType}_${tckn}.${ext}`;
 }
 
-// Upload file to Vercel Blob and return the public URL as the storage key.
-// Falls back to a local path string when BLOB_READ_WRITE_TOKEN is not set (dev without Vercel).
-async function uploadToBlob(
-  standardizedName: string,
+// Returns a deterministic storage key; file bytes are stored in the DB (fileContent column).
+function buildStorageKey(
   applicationId: string,
   documentType: DocumentType,
   versionNumber: number,
-  file: UploadedFile,
-): Promise<string> {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    // Local dev fallback — no actual storage, just a deterministic path
-    return `local://documents/${applicationId}/${documentType}/v${versionNumber}/${standardizedName}`;
-  }
-  const pathname = `documents/${applicationId}/${documentType}/v${versionNumber}/${standardizedName}`;
-  const blob = await put(pathname, file.buffer, {
-    access: "private",
-    contentType: file.mimetype,
-  });
-  return blob.url;
+  standardizedName: string,
+): string {
+  return `db://documents/${applicationId}/${documentType}/v${versionNumber}/${standardizedName}`;
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────
@@ -287,19 +275,20 @@ export class DocumentUploadService {
       });
       const nextVersion = existingVersionCount + 1;
 
-      // Upload to Vercel Blob outside the transaction (network call), store returned URL
-      const blobUrl = await uploadToBlob(fileName, applicationId, documentType, nextVersion, file);
+      const storageKey = buildStorageKey(applicationId, documentType, nextVersion, fileName);
 
       const newVersion = await tx.documentVersion.create({
         data: {
           documentId: document.documentId,
           standardizedFileName: fileName,
-          storageKey: blobUrl,
+          storageKey,
           versionNumber: nextVersion,
           isActive: true,
           uploadedBy: studentId,
           hasBarcode: false,
           isCorrupt: false,
+          fileContent: file.buffer,
+          mimeType: file.mimetype,
         },
       });
 

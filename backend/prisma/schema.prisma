@@ -219,6 +219,8 @@ model DocumentVersion {
   uploadedBy           String   @map("uploaded_by")
   hasBarcode           Boolean  @default(false) @map("has_barcode")
   isCorrupt            Boolean  @default(false) @map("is_corrupt")
+  fileContent          Bytes?   @map("file_content")
+  mimeType             String?  @map("mime_type")
 
   // uploadedBy stores the userId string — no FK so InMemory user IDs work without a Neon users row.
   document Document @relation(fields: [documentId], references: [documentId])

@@ -70,8 +70,12 @@ export function StudentDashboard({ user, onLogout, onSwitchRole }: StudentDashbo
   const [currentView, setCurrentView] = useState<StudentView>('dashboard');
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
   const [activeApplicationId, setActiveApplicationId] = useState<string | null>(null);
+  const [applicationError, setApplicationError] = useState<string | null>(null);
+  const [isSubmittingApplication, setIsSubmittingApplication] = useState(false);
 
   const handleFormSave = async (data: any) => {
+    setApplicationError(null);
+    setIsSubmittingApplication(true);
     try {
       const { applicationId } = await createApplication(user.id, {
         studentTckn: data.tckn ?? '00000000000',
@@ -86,9 +90,9 @@ export function StudentDashboard({ user, onLogout, onSwitchRole }: StudentDashbo
       setActiveApplicationId(applicationId);
       setCurrentView('upload-documents');
     } catch (e) {
-      // Fall back to local placeholder so the UI still navigates forward
-      setActiveApplicationId(`local-${Date.now()}`);
-      setCurrentView('upload-documents');
+      setApplicationError(e instanceof Error ? e.message : 'Başvuru oluşturulamadı. Lütfen tekrar deneyin.');
+    } finally {
+      setIsSubmittingApplication(false);
     }
   };
 
@@ -121,6 +125,12 @@ export function StudentDashboard({ user, onLogout, onSwitchRole }: StudentDashbo
             <ArrowLeft className="w-4 h-4 mr-2" />
             Geri Dön
           </Button>
+          {applicationError && (
+            <div className="flex items-center gap-2 p-4 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              {applicationError}
+            </div>
+          )}
           <ApplicationForm
             onSave={handleFormSave}
             onCancel={() => setCurrentView('dashboard')}

@@ -1,3 +1,4 @@
+import { put } from "@vercel/blob";
 import { prisma } from "../../shared/prisma-client";
 import { ApplicationStatus, DocumentType, UserRole } from "../../shared/types";
 import {
@@ -138,14 +139,20 @@ function standardizedFileName(
   return `${applicationId}_${documentType}_${tckn}.${ext}`;
 }
 
-// Returns a deterministic storage key; file bytes are stored in the DB (fileContent column).
-function buildStorageKey(
+async function uploadToBlob(
   applicationId: string,
   documentType: DocumentType,
   versionNumber: number,
   standardizedName: string,
-): string {
-  return `db://documents/${applicationId}/${documentType}/v${versionNumber}/${standardizedName}`;
+  file: UploadedFile,
+): Promise<string> {
+  const blobPath = `documents/${applicationId}/${documentType}/v${versionNumber}/${standardizedName}`;
+  // @ts-ignore -- @vercel/blob v2+ supports "private"; run pnpm install to update local types
+  const blob = await put(blobPath, file.buffer, {
+    access: "private",
+    contentType: file.mimetype,
+  });
+  return blob.url;
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────
@@ -244,55 +251,54 @@ export class DocumentUploadService {
       file.originalname,
     );
 
+    // Determine next version number before blob upload
+    const existingDoc = await prisma.document.findFirst({
+      where: { applicationId, documentType },
+    });
+    const existingVersionCount = existingDoc
+      ? await prisma.documentVersion.count({ where: { documentId: existingDoc.documentId } })
+      : 0;
+    const nextVersion = existingVersionCount + 1;
+
+    // Upload to private Vercel Blob store first (outside transaction — blob uploads can't be rolled back)
+    const blobUrl = await uploadToBlob(applicationId, documentType, nextVersion, fileName, file);
+
     // Upsert Document slot, then add a new active DocumentVersion
     const result = await prisma.$transaction(async (tx) => {
-      let document = await tx.document.findFirst({
-        where: { applicationId, documentType },
-      });
+      const doc = await tx.document.findFirst({ where: { applicationId, documentType } });
 
-      if (!document) {
-        document = await tx.document.create({
-          data: {
-            applicationId,
-            documentType,
-            status: "UPLOADED",
-          },
+      let documentId: string;
+      if (!doc) {
+        const created = await tx.document.create({
+          data: { applicationId, documentType, status: "UPLOADED" },
         });
+        documentId = created.documentId;
       } else {
-        // Archive the previously active version
         await tx.documentVersion.updateMany({
-          where: { documentId: document.documentId, isActive: true },
+          where: { documentId: doc.documentId, isActive: true },
           data: { isActive: false },
         });
         await tx.document.update({
-          where: { documentId: document.documentId },
+          where: { documentId: doc.documentId },
           data: { status: "UPLOADED" },
         });
+        documentId = doc.documentId;
       }
-
-      const existingVersionCount = await tx.documentVersion.count({
-        where: { documentId: document.documentId },
-      });
-      const nextVersion = existingVersionCount + 1;
-
-      const storageKey = buildStorageKey(applicationId, documentType, nextVersion, fileName);
 
       const newVersion = await tx.documentVersion.create({
         data: {
-          documentId: document.documentId,
+          documentId,
           standardizedFileName: fileName,
-          storageKey,
+          storageKey: blobUrl,
           versionNumber: nextVersion,
           isActive: true,
           uploadedBy: studentId,
           hasBarcode: false,
           isCorrupt: false,
-          fileContent: file.buffer,
-          mimeType: file.mimetype,
         },
       });
 
-      return { document, newVersion, totalVersions: nextVersion };
+      return { newVersion, totalVersions: nextVersion };
     });
 
     const meta = SLOT_META[documentType];

@@ -9,7 +9,7 @@ import {
 } from "../../shared/types";
 import {
   IApplicationRepository,
-  IIntibakTableRepository,
+  IIntibakRepository,
   IPackageRepository,
 } from "../../shared/repositories";
 import { AuditLogger, NotificationService } from "../../shared/audit";
@@ -18,7 +18,7 @@ import {
   NotFoundError,
   ValidationError,
 } from "../../shared/errors";
-import { computePackageHash } from "../../shared/hash";
+import { computePackageHash } from "../board/hash";
 import {
   BoardDecisionInput,
   BoardDecisionResult,
@@ -36,11 +36,11 @@ import {
   SignatureVerifyInput,
   SignatureVerifyResult,
   StatePropagationEvent,
-} from "../../shared/board.types";
+} from "../board/board.types";
 
 export interface BoardServiceDeps {
   applications: IApplicationRepository;
-  intibakTables: IIntibakTableRepository;
+  intibakTables: IIntibakRepository;
   packages: IPackageRepository;
   boardStates: IBoardReviewStateRepository;
   audit: AuditLogger;

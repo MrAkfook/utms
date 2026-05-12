@@ -1,10 +1,10 @@
 import express, { Express, Request, Response } from "express";
-import { AppContainer, createContainer } from "./shared/container";
-import { mockAuthMiddleware } from "./shared/middleware/mock-auth";
-import { errorHandler } from "./shared/middleware/error-handler";
-import { buildOidbRouter } from "./modules/oidb/oidb.routes";
-import { buildIntibakRouter } from "./modules/intibak/intibak.routes";
-import { buildBoardRouter } from "./modules/board/board.routes";
+import { AppContainer, createContainer } from "../../shared/container";
+import { mockAuthMiddleware } from "../../shared/middleware/mock-auth";
+import { errorHandler } from "../../shared/middleware/error-handler";
+import { buildOidbRouter } from "../../modules/oidb/oidb.routes";
+import { buildIntibakRouter } from "../../modules/intibak/intibak.routes";
+import { buildBoardRouter } from "../../modules/board/board.routes";
 
 export interface CreateAppOptions {
   container?: AppContainer;

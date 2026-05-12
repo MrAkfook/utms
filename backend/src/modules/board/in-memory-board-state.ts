@@ -1,7 +1,7 @@
 import {
   BoardReviewState,
   IBoardReviewStateRepository,
-} from "../board.types";
+} from "../board/board.types";
 
 /**
  * In-memory implementation of IBoardReviewStateRepository.

@@ -1,4 +1,4 @@
-import express, { Express, Request, Response } from "express";
+import express, { Express, NextFunction, Request, Response } from "express";
 import { AppContainer, createContainer } from "./shared/container";
 import { mockAuthMiddleware } from "./shared/middleware/mock-auth";
 import { errorHandler } from "./shared/middleware/error-handler";
@@ -17,7 +17,7 @@ export function createApp(options: CreateAppOptions = {}): { app: Express; conta
 
   // CORS — allow any origin so the frontend Vercel domain can call this backend.
   // ALLOWED_ORIGIN env var can restrict to a specific domain in production.
-  app.use((req: Request, res: Response, next) => {
+  app.use((req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers.origin ?? "*";
     res.setHeader("Access-Control-Allow-Origin", process.env.ALLOWED_ORIGIN ?? origin);
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");

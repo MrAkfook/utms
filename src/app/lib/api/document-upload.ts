@@ -1,6 +1,6 @@
-// In local dev the Vite proxy routes /api → localhost:3001, so BASE = '/api'.
-// On Vercel set VITE_API_URL to the backend deployment URL (no trailing slash, no /api suffix).
-const BASE = (import.meta.env.VITE_API_URL ?? '') + '/api';
+// In local dev the Vite proxy routes /api → localhost:3001.
+// On Vercel the root vercel.json rewrites /api/* → /api/index (Express serverless).
+const BASE = '/api';
 
 function authHeaders(userId: string): HeadersInit {
   return { 'x-mock-user': userId };

@@ -12,6 +12,8 @@ import {
 import type { AppContainer } from "../shared/container";
 
 const PERIOD_ID = "period-spring-2026";
+const PERIOD_SCENARIOS = "period-ygk-scenarios-2026";
+const DEPT_ME = "dept-mechanical-engineering";
 const FACULTY_ENG = "faculty-engineering";
 const FACULTY_ARCH = "faculty-architecture";
 const DEPT_CMPE = "dept-computer-engineering";
@@ -305,6 +307,252 @@ function seedApplications(c: AppContainer): void {
       rankingCategory: RankingCategory.Red,
       rejectionReason: "Below quota",
     }),
+
+    // ── Test Case 5A0: Dean kuyruğundan YGK'ya iletme ───────────────────────
+    buildApplication({
+      applicationId: "app-sevda-birkan-dean",
+      studentId: "student-sevda-birkan",
+      studentTckn: "11122233344",
+      studentFullName: "Sevda Birkan",
+      periodId: PERIOD_SCENARIOS,
+      targetDepartmentId: DEPT_CMPE,
+      targetFacultyId: FACULTY_ENG,
+      targetSemester: 3,
+      submittedGpa: 3.80,
+      submittedYksScore: 450,
+      yksExamYear: 2024,
+      finishedSemester: 3,
+      currentInstitution: "Istanbul Technical University",
+      currentDepartment: "Industrial Engineering",
+      ydyoExempt: true,
+      currentStatus: ApplicationStatus.PendingDeansOfficeReview,
+      preScreening: { isPassed: true, failedRules: [] },
+    }),
+
+    // ── Test Case 5B: Kerem Doğan — yanlış fakülte (Mimarlık → Mühendislik) ─
+    buildApplication({
+      applicationId: "app-kerem-dogan",
+      studentId: "student-kerem-dogan",
+      studentTckn: "99988877766",
+      studentFullName: "Kerem Dogan",
+      periodId: PERIOD_SCENARIOS,
+      targetDepartmentId: DEPT_ARCH,
+      targetFacultyId: FACULTY_ARCH,
+      targetSemester: 3,
+      submittedGpa: 3.20,
+      submittedYksScore: 410,
+      yksExamYear: 2024,
+      finishedSemester: 3,
+      currentInstitution: "Dokuz Eylul University",
+      currentDepartment: "Architecture",
+      ydyoExempt: false,
+      currentStatus: ApplicationStatus.PendingDeansOfficeReview,
+      preScreening: { isPassed: true, failedRules: [] },
+    }),
+
+    // ── Test Case 5D: Deniz Arslan — geçersiz dönem (4. dönem) ─────────────
+    buildApplication({
+      applicationId: "app-deniz-arslan",
+      studentId: "student-deniz-arslan",
+      studentTckn: "22233344455",
+      studentFullName: "Deniz Arslan",
+      periodId: PERIOD_SCENARIOS,
+      targetDepartmentId: DEPT_CMPE,
+      targetFacultyId: FACULTY_ENG,
+      targetSemester: 3,
+      submittedGpa: 3.10,
+      submittedYksScore: 420,
+      yksExamYear: 2024,
+      finishedSemester: 4,
+      currentInstitution: "Bogazici University",
+      currentDepartment: "Computer Engineering",
+      ydyoExempt: false,
+      currentStatus: ApplicationStatus.IntakeVerified,
+      preScreening: { isPassed: false, failedRules: ["INVALID_SEMESTER"] },
+    }),
+
+    // ── Test Case 5E: Burak Çelik — İnşaat Müh., koşul yok ────────────────
+    buildApplication({
+      applicationId: "app-burak-celik",
+      studentId: "student-burak-celik",
+      studentTckn: "33344455566",
+      studentFullName: "Burak Celik",
+      periodId: PERIOD_SCENARIOS,
+      targetDepartmentId: "dept-civil",
+      targetFacultyId: FACULTY_ENG,
+      targetSemester: 5,
+      submittedGpa: 2.90,
+      submittedYksScore: 380,
+      yksExamYear: 2024,
+      finishedSemester: 5,
+      currentInstitution: "Dokuz Eylul University",
+      currentDepartment: "Civil Engineering",
+      ydyoExempt: false,
+      currentStatus: ApplicationStatus.IntakeVerified,
+      preScreening: { isPassed: true, failedRules: [] },
+    }),
+
+    // ── Test Case 5F: Selin Kaya — Mimarlık, koşullar karşılanmıyor ────────
+    buildApplication({
+      applicationId: "app-selin-kaya",
+      studentId: "student-selin-kaya",
+      studentTckn: "44455566677",
+      studentFullName: "Selin Kaya",
+      periodId: PERIOD_SCENARIOS,
+      targetDepartmentId: DEPT_ARCH,
+      targetFacultyId: FACULTY_ARCH,
+      targetSemester: 3,
+      submittedGpa: 2.80,
+      submittedYksScore: 360,
+      yksExamYear: 2024,
+      finishedSemester: 3,
+      currentInstitution: "Mimar Sinan University",
+      currentDepartment: "Architecture",
+      ydyoExempt: false,
+      currentStatus: ApplicationStatus.IntakeVerified,
+      preScreening: {
+        isPassed: false,
+        failedRules: ["DEPT_CONDITION_FAILED"],
+        conditionChecks: [
+          { name: "Tasarım Stüdyosu", requirement: "AA", studentValue: "BB", met: false },
+          { name: "Portfolyo", requirement: "Yüklenmeli", studentValue: "Yüklenmemiş", met: false },
+        ],
+      },
+    }),
+
+    // ── Test Case 5G: Mert Şahin — Mimarlık, koşullar karşılanıyor ─────────
+    buildApplication({
+      applicationId: "app-mert-sahin",
+      studentId: "student-mert-sahin",
+      studentTckn: "55566677788",
+      studentFullName: "Mert Sahin",
+      periodId: PERIOD_SCENARIOS,
+      targetDepartmentId: DEPT_ARCH,
+      targetFacultyId: FACULTY_ARCH,
+      targetSemester: 3,
+      submittedGpa: 3.20,
+      submittedYksScore: 400,
+      yksExamYear: 2024,
+      finishedSemester: 3,
+      currentInstitution: "Istanbul University",
+      currentDepartment: "Interior Architecture",
+      ydyoExempt: false,
+      currentStatus: ApplicationStatus.IntakeVerified,
+      preScreening: {
+        isPassed: true,
+        failedRules: [],
+        conditionChecks: [
+          { name: "Tasarım Stüdyosu", requirement: "AA", studentValue: "AA", met: true },
+          { name: "Portfolyo", requirement: "Yüklenmeli", studentValue: "Yüklendi", met: true },
+        ],
+      },
+    }),
+
+    // ── Test Case 5K: Tie-breaking — Makine Müh. ────────────────────────────
+    // Emre Yılmaz: daha yüksek puan, açıkça Asil#1
+    buildApplication({
+      applicationId: "app-emre-yilmaz-me",
+      studentId: "student-emre-yilmaz-me",
+      studentTckn: "77788899900",
+      studentFullName: "Emre Yilmaz",
+      periodId: PERIOD_SCENARIOS,
+      targetDepartmentId: DEPT_ME,
+      targetFacultyId: FACULTY_ENG,
+      targetSemester: 3,
+      submittedGpa: 3.80,
+      submittedYksScore: 450,
+      yksExamYear: 2024,
+      finishedSemester: 3,
+      currentInstitution: "Ankara University",
+      currentDepartment: "Mechanical Engineering",
+      ydyoExempt: false,
+      // score = (450/500*0.9)+(3.80*0.1) = 0.81+0.38 = 1.19
+      currentStatus: ApplicationStatus.InReviewYgk,
+      preScreening: { isPassed: true, failedRules: [] },
+    }),
+    // Seda Soyman: aynı puan → eşitlik
+    buildApplication({
+      applicationId: "app-seda-soyman",
+      studentId: "student-seda-soyman",
+      studentTckn: "88899900011",
+      studentFullName: "Seda Soyman",
+      periodId: PERIOD_SCENARIOS,
+      targetDepartmentId: DEPT_ME,
+      targetFacultyId: FACULTY_ENG,
+      targetSemester: 3,
+      submittedGpa: 3.50,
+      submittedYksScore: 400,
+      yksExamYear: 2024,
+      finishedSemester: 3,
+      currentInstitution: "Ege University",
+      currentDepartment: "Mechanical Engineering",
+      ydyoExempt: false,
+      // score = (400/500*0.9)+(3.50*0.1) = 0.72+0.35 = 1.07 (tie ile Safiye)
+      currentStatus: ApplicationStatus.InReviewYgk,
+      preScreening: { isPassed: true, failedRules: [] },
+    }),
+    // Safiye Sayan: aynı puan → eşitlik
+    buildApplication({
+      applicationId: "app-safiye-sayan",
+      studentId: "student-safiye-sayan",
+      studentTckn: "99900011122",
+      studentFullName: "Safiye Sayan",
+      periodId: PERIOD_SCENARIOS,
+      targetDepartmentId: DEPT_ME,
+      targetFacultyId: FACULTY_ENG,
+      targetSemester: 3,
+      submittedGpa: 3.50,
+      submittedYksScore: 400,
+      yksExamYear: 2024,
+      finishedSemester: 3,
+      currentInstitution: "Dokuz Eylul University",
+      currentDepartment: "Industrial Engineering",
+      ydyoExempt: false,
+      // score = 1.07 (aynı Seda ile)
+      currentStatus: ApplicationStatus.InReviewYgk,
+      preScreening: { isPassed: true, failedRules: [] },
+    }),
+
+    // ── Test Case 5L: Caner Ak — zorunlu not girilmeden karar engellendi ────
+    buildApplication({
+      applicationId: "app-caner-ak",
+      studentId: "student-caner-ak",
+      studentTckn: "10011022033",
+      studentFullName: "Caner Ak",
+      periodId: PERIOD_SCENARIOS,
+      targetDepartmentId: DEPT_CMPE,
+      targetFacultyId: FACULTY_ENG,
+      targetSemester: 3,
+      submittedGpa: 3.00,
+      submittedYksScore: 410,
+      yksExamYear: 2024,
+      finishedSemester: 3,
+      currentInstitution: "Hacettepe University",
+      currentDepartment: "Computer Engineering",
+      ydyoExempt: false,
+      currentStatus: ApplicationStatus.IntakeVerified,
+      preScreening: { isPassed: true, failedRules: [] },
+    }),
+
+    // ── Test Case 5H: Ceren Aydın — YKS puanı eksik ────────────────────────
+    buildApplication({
+      applicationId: "app-ceren-aydin",
+      studentId: "student-ceren-aydin",
+      studentTckn: "66677788899",
+      studentFullName: "Ceren Aydin",
+      periodId: PERIOD_SCENARIOS,
+      targetDepartmentId: DEPT_CMPE,
+      targetFacultyId: FACULTY_ENG,
+      targetSemester: 5,
+      submittedGpa: 2.90,
+      submittedYksScore: undefined,
+      finishedSemester: 5,
+      currentInstitution: "Ankara University",
+      currentDepartment: "Computer Science",
+      ydyoExempt: false,
+      currentStatus: ApplicationStatus.IntakeVerified,
+      preScreening: { isPassed: true, failedRules: [] },
+    }),
   ];
   for (const a of apps) c.applications.put(a);
 }
@@ -420,10 +668,23 @@ function seedOcrFor(c: AppContainer): void {
   c.ocr.setTranscriptFor("doc-app-asil-can-aydin-transcript", { ok: true, courses: [] });
 }
 
+function seedQuotas(c: AppContainer): void {
+  // Test Case 5A: Bilgisayar Müh. — Asil:2, Yedek:3
+  c.quotas.put({ departmentId: DEPT_CMPE, periodId: PERIOD_SCENARIOS, asilQuota: 2, yedekQuota: 3 });
+  // Test Case 5K: Makine Müh. — Asil:2, Yedek:1
+  c.quotas.put({ departmentId: DEPT_ME, periodId: PERIOD_SCENARIOS, asilQuota: 2, yedekQuota: 1 });
+  // Mimarlık — Asil:2, Yedek:1
+  c.quotas.put({ departmentId: DEPT_ARCH, periodId: PERIOD_SCENARIOS, asilQuota: 2, yedekQuota: 1 });
+  // Bahar 2026 dönem kotaları
+  c.quotas.put({ departmentId: DEPT_CMPE, periodId: PERIOD_ID, asilQuota: 8, yedekQuota: 4 });
+  c.quotas.put({ departmentId: DEPT_EE, periodId: PERIOD_ID, asilQuota: 4, yedekQuota: 2 });
+}
+
 export function seedAll(c: AppContainer): void {
   seedUsers(c);
   seedApplications(c);
   seedDocuments(c);
   seedCurriculum(c);
   seedOcrFor(c);
+  seedQuotas(c);
 }

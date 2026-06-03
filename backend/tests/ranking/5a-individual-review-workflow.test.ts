@@ -67,7 +67,7 @@ describe("Test Case 5A: Successful Individual Review Workflow", () => {
 
     expect(response.body.hasConditions).toBe(false);
     expect(response.body.autoPass).toBe(true);
-    expect(response.body.message).toBe("No dept. conditions — proceeding.");
+    expect(response.body.message).toBe("Bölüm koşulu yok — devam ediliyor.");
   });
 
   it("Step 4: should save conditions decision as met", async () => {

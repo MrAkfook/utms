@@ -65,6 +65,17 @@ export class RankingController {
 
   // ─── Individual Review Methods ────────────────────────────────────────────
 
+  getQueue = (req: Request, res: Response): void => {
+    this.requireUser(req);
+    const applications = this.service.getYgkQueue();
+
+    res.json({
+      applications,
+      count: applications.length,
+      message: `Retrieved ${applications.length} applications in YGK queue`,
+    });
+  };
+
   startReview = (req: Request, res: Response): void => {
     const userId = this.requireUser(req);
     const { applicationId } = req.params;

@@ -49,15 +49,17 @@ describe("Test Case 5A0: Successful Forwarding to YGK Queue", () => {
     expect(application?.currentStatus).toBe(ApplicationStatus.InReviewYgk);
   });
 
-  it("should reject start-review if application is not in INTAKE_VERIFIED status", async () => {
-    // Try to start review again (already IN_REVIEW_YGK)
+  it("should be idempotent if application is already IN_REVIEW_YGK", async () => {
+    // Try to start review again (already IN_REVIEW_YGK) — should return 200 idempotently
     const response = await request(app)
       .post("/api/ranking/app-sevda-birkan/start-review")
       .set("x-mock-user", "user-ygk-cmpe-1")
-      .expect(400);
+      .expect(200);
 
-    expect(response.body.error).toBe("VALIDATION_ERROR");
-    expect(response.body.message).toContain("INTAKE_VERIFIED");
+    expect(response.body.message).toBe("Application review started");
+    // Status should remain IN_REVIEW_YGK
+    const application = container.applications.findById("app-sevda-birkan");
+    expect(application?.currentStatus).toBe(ApplicationStatus.InReviewYgk);
   });
 
   it("should create audit log for review start", async () => {

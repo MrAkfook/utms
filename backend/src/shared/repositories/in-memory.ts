@@ -2,6 +2,7 @@ import {
   Application,
   AuditLogEntry,
   DepartmentCurriculum,
+  DepartmentQuota,
   Document,
   EvaluationPackage,
   IntibakTable,
@@ -19,8 +20,10 @@ import {
   IUserRepository,
 } from "./interfaces";
 
+// DEV-ONLY: clear() methods used by /api/dev/reset — remove before submission
 export class InMemoryUserRepository implements IUserRepository {
   constructor(private readonly store: Map<string, User> = new Map()) {}
+  clear(): void { this.store.clear(); }
 
   put(user: User): void {
     this.store.set(user.userId, user);
@@ -40,6 +43,7 @@ export class InMemoryUserRepository implements IUserRepository {
 
 export class InMemoryApplicationRepository implements IApplicationRepository {
   constructor(private readonly store: Map<string, Application> = new Map()) {}
+  clear(): void { this.store.clear(); }
 
   put(app: Application): void {
     this.store.set(app.applicationId, app);
@@ -75,6 +79,7 @@ export class InMemoryDocumentRepository implements IDocumentRepository {
   private storeReachable = true;
 
   constructor(private readonly store: Map<string, Document> = new Map()) {}
+  clear(): void { this.store.clear(); }
 
   put(doc: Document): void {
     this.store.set(doc.documentId, doc);
@@ -99,6 +104,7 @@ export class InMemoryDocumentRepository implements IDocumentRepository {
 
 export class InMemoryIntibakRepository implements IIntibakRepository {
   constructor(private readonly store: Map<string, IntibakTable> = new Map()) {}
+  clear(): void { this.store.clear(); }
 
   findById(intibakTableId: string): IntibakTable | undefined {
     return this.store.get(intibakTableId);
@@ -119,6 +125,7 @@ export class InMemoryIntibakRepository implements IIntibakRepository {
 
 export class InMemoryCurriculumRepository implements ICurriculumRepository {
   constructor(private readonly store: Map<string, DepartmentCurriculum> = new Map()) {}
+  clear(): void { this.store.clear(); }
 
   put(curriculum: DepartmentCurriculum): void {
     this.store.set(curriculum.departmentId, curriculum);
@@ -131,6 +138,7 @@ export class InMemoryCurriculumRepository implements ICurriculumRepository {
 
 export class InMemoryPackageRepository implements IPackageRepository {
   constructor(private readonly store: Map<string, EvaluationPackage> = new Map()) {}
+  clear(): void { this.store.clear(); }
 
   findById(packageId: string): EvaluationPackage | undefined {
     return this.store.get(packageId);
@@ -157,7 +165,8 @@ export class InMemoryPackageRepository implements IPackageRepository {
 }
 
 export class InMemoryAuditRepository implements IAuditRepository {
-  private readonly entries: AuditLogEntry[] = [];
+  private entries: AuditLogEntry[] = [];
+  clear(): void { this.entries = []; }
 
   append(entry: AuditLogEntry): AuditLogEntry {
     this.entries.push(entry);
@@ -175,8 +184,27 @@ export class InMemoryAuditRepository implements IAuditRepository {
   }
 }
 
+export class InMemoryQuotaRepository {
+  private readonly store: Map<string, DepartmentQuota> = new Map();
+
+  private key(departmentId: string, periodId: string): string {
+    return `${departmentId}::${periodId}`;
+  }
+
+  put(quota: DepartmentQuota): void {
+    this.store.set(this.key(quota.departmentId, quota.periodId), quota);
+  }
+
+  find(departmentId: string, periodId: string): DepartmentQuota | undefined {
+    return this.store.get(this.key(departmentId, periodId));
+  }
+
+  clear(): void { this.store.clear(); }
+}
+
 export class InMemoryNotificationRepository implements INotificationRepository {
-  private readonly entries: NotificationRecord[] = [];
+  private entries: NotificationRecord[] = [];
+  clear(): void { this.entries = []; }
   private serviceAvailable = true;
 
   setAvailable(available: boolean): void {

@@ -6,6 +6,7 @@ import {
   InMemoryIntibakRepository,
   InMemoryNotificationRepository,
   InMemoryPackageRepository,
+  InMemoryQuotaRepository,
   InMemoryUserRepository,
 } from "./repositories";
 import { seedAll } from "../mocks/seed-data";
@@ -19,6 +20,7 @@ export interface AppContainer {
   intibakTables: InMemoryIntibakRepository;
   curriculum: InMemoryCurriculumRepository;
   packages: InMemoryPackageRepository;
+  quotas: InMemoryQuotaRepository;
   audit: InMemoryAuditRepository;
   notifications: InMemoryNotificationRepository;
   edevlet: EDevletMockClient;
@@ -33,6 +35,7 @@ export function createContainer(): AppContainer {
     intibakTables: new InMemoryIntibakRepository(),
     curriculum: new InMemoryCurriculumRepository(),
     packages: new InMemoryPackageRepository(),
+    quotas: new InMemoryQuotaRepository(),
     audit: new InMemoryAuditRepository(),
     notifications: new InMemoryNotificationRepository(),
     edevlet: new EDevletMockClient(),

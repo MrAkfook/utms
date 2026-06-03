@@ -7,6 +7,9 @@ import { buildIntibakRouter } from "./modules/intibak/intibak.routes";
 import { buildDocumentUploadRouter } from "./modules/document-upload/document-upload.routes";
 import { buildApplicationRouter } from "./modules/application/application.routes";
 import { buildRankingRouter } from "./modules/ranking/ranking.routes";
+import { buildDeanRouter } from "./modules/dean/dean.routes";
+// DEV-ONLY: remove this import before submission
+import { seedAll } from "./mocks/seed-data";
 
 export interface CreateAppOptions {
   container?: AppContainer;
@@ -33,11 +36,27 @@ export function createApp(options: CreateAppOptions = {}): { app: Express; conta
     res.json({ status: "ok", scope: "Scenario 3 (Document Upload) & Scenario 4 (OIDB) & Scenario 5 (Ranking) & Scenario 6 (Intibak)" });
   });
 
+  // DEV-ONLY: reset all in-memory data back to seed state — remove before submission
+  app.post("/api/dev/reset", (_req: Request, res: Response) => {
+    container.applications.clear();
+    container.documents.clear();
+    container.intibakTables.clear();
+    container.packages.clear();
+    container.quotas.clear();
+    container.audit.clear();
+    container.notifications.clear();
+    container.users.clear();
+    container.curriculum.clear();
+    seedAll(container);
+    res.json({ message: "Test verileri sıfırlandı" });
+  });
+
   const auth = mockAuthMiddleware(container);
   app.use("/api/applications", auth, buildApplicationRouter());
   app.use("/api/documents", auth, buildDocumentUploadRouter());
   app.use("/api/oidb", auth, buildOidbRouter(container));
   app.use("/api/ranking", auth, buildRankingRouter(container));
+  app.use("/api/dean", auth, buildDeanRouter(container));
   app.use("/api/ygk", auth, buildIntibakRouter(container));
 
   app.use((_req: Request, res: Response) => {

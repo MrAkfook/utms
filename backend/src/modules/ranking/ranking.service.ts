@@ -44,6 +44,11 @@ export interface RankingResultDto {
   category: RankingCategory;
 }
 
+export interface TieGroup {
+  boundaryRank: number;
+  applicationIds: string[];
+}
+
 export interface RankingSummaryDto {
   departmentId: string;
   periodId: string;
@@ -55,6 +60,8 @@ export interface RankingSummaryDto {
   yedekCount: number;
   redCount: number;
   rankings: RankingResultDto[];
+  hasTies: boolean;
+  ties: TieGroup[];
 }
 
 export interface DepartmentRankingOverviewDto {
@@ -133,14 +140,54 @@ export class RankingService {
   }
 
   /**
+   * Get YGK queue - applications ready for review
+   * Returns applications with status INTAKE_VERIFIED or IN_REVIEW_YGK
+   */
+  getYgkQueue() {
+    const applications = this.deps.applications
+      .findAll()
+      .filter(
+        (app: Application) =>
+          app.currentStatus === ApplicationStatus.IntakeVerified ||
+          app.currentStatus === ApplicationStatus.InReviewYgk
+      )
+      .sort((a: Application, b: Application) => {
+        // Sort by submittedAt ascending (oldest first)
+        return (
+          new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime()
+        );
+      });
+
+    return applications.map((app: Application) => ({
+      applicationId: app.applicationId,
+      studentFullName: app.studentFullName,
+      studentTckn: app.studentTckn,
+      targetDepartmentId: app.targetDepartmentId,
+      targetSemester: app.targetSemester,
+      submittedGpa: app.submittedGpa,
+      submittedYksScore: app.submittedYksScore,
+      currentStatus: app.currentStatus,
+      submittedAt: app.submittedAt,
+      ydyoExempt: app.ydyoExempt,
+      preScreening: app.preScreening,
+    }));
+  }
+
+  /**
    * Start individual review of an application
    * Transitions from INTAKE_VERIFIED to IN_REVIEW_YGK
+   * Idempotent: if already IN_REVIEW_YGK, returns silently
    */
   startApplicationReview(applicationId: string, actorUserId: string): void {
     const app = this.deps.applications.findById(applicationId);
 
     if (!app) {
       throw new NotFoundError(`Application ${applicationId} not found`);
+    }
+
+    // Idempotent: already in review, nothing to do
+    if (app.currentStatus === ApplicationStatus.InReviewYgk) {
+      return;
     }
 
     if (app.currentStatus !== ApplicationStatus.IntakeVerified) {
@@ -186,10 +233,30 @@ export class RankingService {
       warnings.push(eligibility.reason);
     }
 
+    // Build per-field warning map for inline display
+    const fieldWarnings: Record<string, string> = {};
+    if (!eligibility.eligible && eligibility.reason) {
+      const reason = eligibility.reason;
+      if (reason.includes("semester") || reason.includes("Semester")) {
+        fieldWarnings.semester = "Dönem gereksinimi karşılanmıyor. Sadece 3. veya 5. dönem öğrencileri uygun.";
+      }
+      if (reason.includes("GPA") || reason.includes("gpa")) {
+        fieldWarnings.gpa = `Minimum GPA gereksinimi karşılanmıyor (${app.submittedGpa.toFixed(2)} < 2.50).`;
+      }
+      if (reason.includes("YKS") || reason.includes("yks")) {
+        fieldWarnings.yks = "YKS puanı gerekli veya geçersiz.";
+      }
+    }
+
     return {
       applicationId: app.applicationId,
       studentFullName: app.studentFullName,
+      studentTckn: app.studentTckn,
+      currentInstitution: app.currentInstitution,
+      currentDepartment: app.currentDepartment,
+      targetDepartmentId: app.targetDepartmentId,
       gpa: app.submittedGpa,
+      yksScore: app.submittedYksScore,
       activeSemester: app.finishedSemester,
       targetSemester: app.targetSemester,
       preScreening: app.preScreening,
@@ -197,6 +264,7 @@ export class RankingService {
       language: app.language,
       eligible: eligibility.eligible,
       warnings,
+      fieldWarnings,
     };
   }
 
@@ -279,19 +347,21 @@ export class RankingService {
       );
     }
 
-    // TODO: Fetch actual department-specific conditions from a repository
-    // For now, return a placeholder structure
-    const hasConditions = false; // Mock: Computer Engineering has no conditions
+    // Use conditionChecks from preScreening if present (set by seed/intake)
+    const conditionChecks = app.preScreening.conditionChecks ?? [];
+    const hasConditions = conditionChecks.length > 0;
+    const allMet = conditionChecks.every((c) => c.met);
 
     return {
       applicationId: app.applicationId,
       departmentId: app.targetDepartmentId,
       hasConditions,
-      conditions: [], // e.g., [{name: "Design Studio", grade: "AA", met: true}]
+      conditions: conditionChecks,
       autoPass: !hasConditions,
+      allConditionsMet: allMet,
       message: !hasConditions
-        ? "No dept. conditions — proceeding."
-        : "Please verify department conditions.",
+        ? "Bölüm koşulu yok — devam ediliyor."
+        : "",
     };
   }
 
@@ -375,8 +445,11 @@ export class RankingService {
     }
 
     if (!app.submittedYksScore) {
+      // 5H: YKS eksik → ÖİDB'ye iade et
+      app.currentStatus = ApplicationStatus.IntakeVerified;
+      this.deps.applications.save(app);
       throw new ValidationError(
-        "Score could not be calculated. (431-CALC) - YKS score is missing"
+        "Score could not be calculated. (431-CALC) - YKS score is missing. Application returned to OIDB queue."
       );
     }
 
@@ -390,7 +463,7 @@ export class RankingService {
       yksScore: app.submittedYksScore,
       gpa: app.submittedGpa,
       calculatedScore: score,
-      formula: "(YKS / 500 * 0.90) + (GPA * 0.10)",
+      formula: "Puan = (YKS / 500 × 0.9) + (GPA × 0.1)",
     };
   }
 
@@ -631,6 +704,24 @@ export class RankingService {
       category: item.category,
     }));
 
+    // ── Tie detection at the Asil/Yedek boundary ──────────────────────────
+    const ties: TieGroup[] = [];
+    if (asilCount > 0 && asilCount < eligible.length) {
+      const lastAsilScore = eligible[asilCount - 1].transferScore;
+      const firstNonAsilScore = eligible[asilCount].transferScore;
+      if (Math.abs(lastAsilScore - firstNonAsilScore) < 0.000001) {
+        const tiedApps = eligible.filter(
+          (e) => Math.abs(e.transferScore - lastAsilScore) < 0.000001
+        );
+        if (tiedApps.length > 1) {
+          ties.push({
+            boundaryRank: asilCount,
+            applicationIds: tiedApps.map((e) => e.application.applicationId),
+          });
+        }
+      }
+    }
+
     return {
       departmentId,
       periodId,
@@ -642,6 +733,8 @@ export class RankingService {
       yedekCount,
       redCount: eligible.length - asilCount - yedekCount + ineligible.length,
       rankings,
+      hasTies: ties.length > 0,
+      ties,
     };
   }
 

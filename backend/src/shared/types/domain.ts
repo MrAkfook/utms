@@ -47,10 +47,18 @@ export interface DocumentVersion {
   isCorrupt?: boolean;
 }
 
+export interface DeptConditionCheck {
+  name: string;
+  requirement: string;
+  studentValue: string;
+  met: boolean;
+}
+
 export interface PreScreeningResult {
   isPassed: boolean;
   failedRules: string[];
   apiFlaggedForManualVerification?: boolean;
+  conditionChecks?: DeptConditionCheck[];
 }
 
 export interface Application {
@@ -97,6 +105,13 @@ export interface DocumentVerificationOutcome {
   documentType: DocumentType;
   badge: DocumentVerificationBadge;
   message?: string;
+}
+
+export interface DepartmentQuota {
+  departmentId: string;
+  periodId: string;
+  asilQuota: number;
+  yedekQuota: number;
 }
 
 export interface PreviousCourse {

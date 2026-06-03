@@ -18,6 +18,39 @@ export function buildRankingRouter(container: AppContainer): Router {
   // ─── Individual Application Review Routes ─────────────────────────────────
 
   /**
+   * GET /api/ranking/quota/:departmentId/:periodId
+   * Get pre-defined quota for a department/period
+   * Requires: YGK Member or higher
+   */
+  r.get(
+    "/quota/:departmentId/:periodId",
+    requireRoles(UserRole.YgkMember, UserRole.YgkChair, UserRole.SystemAdmin),
+    (req, res) => {
+      const { departmentId, periodId } = req.params;
+      const quota = container.quotas.find(departmentId, periodId);
+      if (!quota) {
+        return res.status(404).json({ error: "NOT_FOUND", message: "Bu bölüm/dönem için kota tanımlanmamış" });
+      }
+      return res.json(quota);
+    }
+  );
+
+  /**
+   * GET /api/ranking/queue
+   * Get YGK queue - applications ready for review
+   * Requires: YGK Member or higher
+   */
+  r.get(
+    "/queue",
+    requireRoles(
+      UserRole.YgkMember,
+      UserRole.YgkChair,
+      UserRole.SystemAdmin
+    ),
+    controller.getQueue
+  );
+
+  /**
    * POST /api/ranking/:applicationId/start-review
    * Start individual review of an application
    * Transitions from INTAKE_VERIFIED to IN_REVIEW_YGK

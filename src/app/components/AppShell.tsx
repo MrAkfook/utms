@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { 
-  Bell, 
-  LogOut, 
+import {
+  Bell,
+  LogOut,
   ChevronDown,
   LayoutDashboard,
   FileText,
@@ -18,7 +18,8 @@ import {
   Check,
   Info,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Inbox
 } from 'lucide-react';
 import type { User, UserRole } from '../App';
 
@@ -90,12 +91,13 @@ const NAVIGATION_ITEMS: Record<UserRole, { icon: React.ElementType; label: strin
   ],
   YGK: [
     { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' },
-    { icon: Eye, label: 'Değerlendirmeler', section: 'evaluations' },
-    { icon: BarChart3, label: 'Sıralamalar', section: 'rankings' },
-    { icon: FileText, label: 'İntibak İşlemleri', section: 'intibak' }
+    { icon: Inbox, label: 'İnceleme Kuyruğu', section: 'queue' },
+    { icon: BarChart3, label: 'Sıralama', section: 'rankings' },
+    { icon: FileText, label: 'İntibak', section: 'intibak' }
   ],
   Dean: [
-    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' }
+    { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' },
+    { icon: Inbox, label: 'İnceleme Kuyruğu', section: 'queue' },
   ],
   Board: [
     { icon: LayoutDashboard, label: 'Panel', section: 'dashboard' }

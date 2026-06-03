@@ -3,9 +3,10 @@ import { AppShell } from '../AppShell';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Building2, Send, Eye, FileText, ArrowLeft } from 'lucide-react';
+import { Building2, Send, Eye, FileText, ArrowLeft, Inbox } from 'lucide-react';
 import type { User } from '../../App';
 import { PackageDetailView } from './PackageDetailView';
+import { DeanQueue } from './DeanQueue';
 import { toast } from 'sonner';
 
 interface DeanDashboardProps {
@@ -14,8 +15,8 @@ interface DeanDashboardProps {
   onSwitchRole?: () => void;
 }
 
-type DeanView = 'dashboard' | 'package-detail';
-type Section = 'dashboard';
+type DeanView = 'dashboard' | 'package-detail' | 'queue';
+type Section = 'dashboard' | 'queue';
 
 // Mock packages data
 const MOCK_PACKAGES = [
@@ -72,6 +73,12 @@ export function DeanDashboard({ user, onLogout, onSwitchRole }: DeanDashboardPro
   };
 
   const renderDashboardContent = () => {
+    if (currentView === 'queue' || currentSection === 'queue') {
+      return (
+        <DeanQueue userFacultyId={user.id === 'user-deans-eng' ? 'faculty-engineering' : undefined} />
+      );
+    }
+
     if (currentView === 'package-detail' && selectedPackage) {
       return (
         <div className="space-y-4">
@@ -245,7 +252,11 @@ export function DeanDashboard({ user, onLogout, onSwitchRole }: DeanDashboardPro
       currentSection={currentSection}
       onNavigate={(section) => {
         setCurrentSection(section as Section);
-        setCurrentView('dashboard');
+        if (section === 'queue') {
+          setCurrentView('queue');
+        } else {
+          setCurrentView('dashboard');
+        }
       }}
     >
       {renderDashboardContent()}

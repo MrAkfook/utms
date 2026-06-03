@@ -3,15 +3,18 @@ import { AppShell } from '../AppShell';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { 
-  Users, 
-  TrendingUp, 
+import {
+  Users,
+  TrendingUp,
   FileCheck,
   List,
   Award,
-  ArrowLeft
+  ArrowLeft,
+  Inbox
 } from 'lucide-react';
 import type { User } from '../../App';
+import { YGKQueue } from './YGKQueue';
+import { ApplicationReview } from './ApplicationReview';
 import { AcademicEligibility } from './AcademicEligibility';
 import { RankingTable } from './RankingTable';
 import { IntibakGeneration } from './IntibakGeneration';
@@ -22,14 +25,48 @@ interface YGKDashboardProps {
   onSwitchRole?: () => void;
 }
 
-type Section = 'dashboard' | 'evaluations' | 'rankings' | 'intibak';
-type YGKView = 'dashboard' | 'eligibility' | 'ranking' | 'intibak';
+type Section = 'dashboard' | 'evaluations' | 'rankings' | 'intibak' | 'queue';
+type YGKView = 'dashboard' | 'queue' | 'review' | 'eligibility' | 'ranking' | 'intibak';
 
 export function YGKDashboard({ user, onLogout, onSwitchRole }: YGKDashboardProps) {
   const [currentSection, setCurrentSection] = useState<Section>('dashboard');
   const [currentView, setCurrentView] = useState<YGKView>('dashboard');
+  const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
+
+  const handleOpenApplication = (applicationId: string) => {
+    setSelectedApplicationId(applicationId);
+    setCurrentView('review');
+  };
 
   const renderDashboardContent = () => {
+    // review önce kontrol edilmeli — section=queue kalırken view=review olabilir
+    if (currentView === 'review' && selectedApplicationId) {
+      return (
+        <ApplicationReview
+          applicationId={selectedApplicationId}
+          onBack={() => {
+            setCurrentView('queue');
+            setCurrentSection('queue');
+            setSelectedApplicationId(null);
+          }}
+          onScoreConfirmed={() => {
+            // Puan onaylandı → sıralama ekranına geç
+            setCurrentView('ranking');
+            setCurrentSection('rankings');
+            setSelectedApplicationId(null);
+          }}
+        />
+      );
+    }
+
+    if (currentView === 'queue' || currentSection === 'queue') {
+      return (
+        <div className="space-y-4">
+          <YGKQueue onOpenApplication={handleOpenApplication} />
+        </div>
+      );
+    }
+
     if (currentView === 'eligibility' || currentSection === 'evaluations') {
       return (
         <div className="space-y-4">
@@ -188,9 +225,21 @@ export function YGKDashboard({ user, onLogout, onSwitchRole }: YGKDashboardProps
         </Card>
 
         {/* Workflow Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Button 
-            variant="outline" 
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Button
+            variant="outline"
+            className="h-auto py-6 flex flex-col items-center space-y-2"
+            onClick={() => setCurrentView('queue')}
+          >
+            <Inbox className="w-8 h-8" style={{ color: '#7A1616' }} />
+            <div>
+              <div className="text-sm">İnceleme Kuyruğu</div>
+              <div className="text-xs text-gray-500 mt-1">Bekleyen başvuruları incele</div>
+            </div>
+          </Button>
+
+          <Button
+            variant="outline"
             className="h-auto py-6 flex flex-col items-center space-y-2"
             onClick={() => setCurrentView('eligibility')}
           >
@@ -201,8 +250,8 @@ export function YGKDashboard({ user, onLogout, onSwitchRole }: YGKDashboardProps
             </div>
           </Button>
 
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="h-auto py-6 flex flex-col items-center space-y-2"
             onClick={() => setCurrentView('ranking')}
           >
@@ -213,8 +262,8 @@ export function YGKDashboard({ user, onLogout, onSwitchRole }: YGKDashboardProps
             </div>
           </Button>
 
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="h-auto py-6 flex flex-col items-center space-y-2"
             onClick={() => setCurrentView('intibak')}
           >
@@ -231,12 +280,12 @@ export function YGKDashboard({ user, onLogout, onSwitchRole }: YGKDashboardProps
           <h2 className="text-gray-900 mb-4">Transfer Puanı Hesaplama Formülü</h2>
           <div className="p-4 bg-gray-50 rounded-lg">
             <div className="text-sm text-gray-900 mb-2">
-              <strong>Transfer Puanı = (GPA × 0.60) + (ÖSYM Puanı ÷ 6 × 0.40)</strong>
+              <strong>Puan = (YKS / 500 × 0.9) + (GPA × 0.1)</strong>
             </div>
             <div className="text-xs text-gray-600 space-y-1">
-              <div>• GPA Bileşeni: %60 ağırlık (100'lük sisteme normalize edilir)</div>
-              <div>• ÖSYM Bileşeni: %40 ağırlık (100'lük sisteme normalize edilir)</div>
-              <div>• Dil yeterlilik muafiyeti: +5 bonus puan</div>
+              <div>• YKS Bileşeni: %90 ağırlık (500 üzerinden normalize edilir)</div>
+              <div>• GPA Bileşeni: %10 ağırlık</div>
+              <div>• Sonuç 5 ondalık basamak hassasiyetle saklanır</div>
             </div>
           </div>
         </Card>
@@ -253,10 +302,11 @@ export function YGKDashboard({ user, onLogout, onSwitchRole }: YGKDashboardProps
       currentSection={currentSection}
       onNavigate={(section) => {
         setCurrentSection(section as Section);
+        setSelectedApplicationId(null);
         if (section === 'dashboard') {
           setCurrentView('dashboard');
-        } else if (section === 'evaluations') {
-          setCurrentView('eligibility');
+        } else if (section === 'queue') {
+          setCurrentView('queue');
         } else if (section === 'rankings') {
           setCurrentView('ranking');
         } else if (section === 'intibak') {

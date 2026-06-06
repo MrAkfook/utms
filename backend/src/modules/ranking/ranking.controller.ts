@@ -22,11 +22,11 @@ const ConditionsDecisionSchema = z.object({
 export class RankingController {
   constructor(private readonly service: RankingService) {}
 
-  execute = (req: Request, res: Response): void => {
+  execute = async (req: Request, res: Response): Promise<void> => {
     const userId = this.requireUser(req);
     const body = ExecuteRankingSchema.parse(req.body);
 
-    const result = this.service.executeRanking({
+    const result = await this.service.executeRanking({
       departmentId: body.departmentId,
       periodId: body.periodId,
       quota: body.quota,
@@ -39,11 +39,11 @@ export class RankingController {
     });
   };
 
-  getResults = (req: Request, res: Response): void => {
+  getResults = async (req: Request, res: Response): Promise<void> => {
     this.requireUser(req);
     const { departmentId, periodId } = req.params;
 
-    const results = this.service.getRankingResults(departmentId, periodId);
+    const results = await this.service.getRankingResults(departmentId, periodId);
 
     res.json({
       results,
@@ -51,11 +51,14 @@ export class RankingController {
     });
   };
 
-  getOverview = (req: Request, res: Response): void => {
+  getOverview = async (req: Request, res: Response): Promise<void> => {
     this.requireUser(req);
     const { departmentId, periodId } = req.params;
 
-    const overview = this.service.getDepartmentOverview(departmentId, periodId);
+    const overview = await this.service.getDepartmentOverview(
+      departmentId,
+      periodId
+    );
 
     res.json({
       overview,
@@ -65,9 +68,9 @@ export class RankingController {
 
   // ─── Individual Review Methods ────────────────────────────────────────────
 
-  getQueue = (req: Request, res: Response): void => {
+  getQueue = async (req: Request, res: Response): Promise<void> => {
     this.requireUser(req);
-    const applications = this.service.getYgkQueue();
+    const applications = await this.service.getYgkQueue();
 
     res.json({
       applications,
@@ -76,11 +79,11 @@ export class RankingController {
     });
   };
 
-  startReview = (req: Request, res: Response): void => {
+  startReview = async (req: Request, res: Response): Promise<void> => {
     const userId = this.requireUser(req);
     const { applicationId } = req.params;
 
-    this.service.startApplicationReview(applicationId, userId);
+    await this.service.startApplicationReview(applicationId, userId);
 
     res.json({
       message: "Application review started",
@@ -89,21 +92,24 @@ export class RankingController {
     });
   };
 
-  getEligibility = (req: Request, res: Response): void => {
+  getEligibility = async (req: Request, res: Response): Promise<void> => {
     this.requireUser(req);
     const { applicationId } = req.params;
 
-    const data = this.service.getEligibilityData(applicationId);
+    const data = await this.service.getEligibilityData(applicationId);
 
     res.json(data);
   };
 
-  saveEligibilityDecision = (req: Request, res: Response): void => {
+  saveEligibilityDecision = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
     const userId = this.requireUser(req);
     const { applicationId } = req.params;
     const body = EligibilityDecisionSchema.parse(req.body);
 
-    this.service.saveEligibilityDecision(applicationId, {
+    await this.service.saveEligibilityDecision(applicationId, {
       eligible: body.eligible,
       note: body.note,
       actorUserId: userId,
@@ -117,21 +123,27 @@ export class RankingController {
     });
   };
 
-  getDepartmentConditions = (req: Request, res: Response): void => {
+  getDepartmentConditions = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
     this.requireUser(req);
     const { applicationId } = req.params;
 
-    const data = this.service.getDepartmentConditions(applicationId);
+    const data = await this.service.getDepartmentConditions(applicationId);
 
     res.json(data);
   };
 
-  saveConditionsDecision = (req: Request, res: Response): void => {
+  saveConditionsDecision = async (
+    req: Request,
+    res: Response
+  ): Promise<void> => {
     const userId = this.requireUser(req);
     const { applicationId } = req.params;
     const body = ConditionsDecisionSchema.parse(req.body);
 
-    this.service.saveConditionsDecision(applicationId, {
+    await this.service.saveConditionsDecision(applicationId, {
       conditionsMet: body.conditionsMet,
       note: body.note,
       actorUserId: userId,
@@ -145,20 +157,20 @@ export class RankingController {
     });
   };
 
-  getScoreCalculation = (req: Request, res: Response): void => {
+  getScoreCalculation = async (req: Request, res: Response): Promise<void> => {
     this.requireUser(req);
     const { applicationId } = req.params;
 
-    const data = this.service.calculateScoreForReview(applicationId);
+    const data = await this.service.calculateScoreForReview(applicationId);
 
     res.json(data);
   };
 
-  confirmScore = (req: Request, res: Response): void => {
+  confirmScore = async (req: Request, res: Response): Promise<void> => {
     const userId = this.requireUser(req);
     const { applicationId } = req.params;
 
-    this.service.confirmScore(applicationId, userId);
+    await this.service.confirmScore(applicationId, userId);
 
     res.json({
       message: "Score confirmed and saved - application ready for ranking",
@@ -166,11 +178,11 @@ export class RankingController {
     });
   };
 
-  invalidateScore = (req: Request, res: Response): void => {
+  invalidateScore = async (req: Request, res: Response): Promise<void> => {
     const userId = this.requireUser(req);
     const { applicationId } = req.params;
 
-    this.service.invalidateScore(applicationId, userId);
+    await this.service.invalidateScore(applicationId, userId);
 
     res.json({
       message: "Score invalidated. Please re-verify eligibility.",

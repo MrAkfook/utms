@@ -128,6 +128,20 @@ model Student {
   @@map("student")
 }
 
+// ─── 4. PERIODS ───────────────────────────────────────────────────────────────
+// Modifiable directly in the DB (Prisma Studio / SQL). Only one row should
+// have isActive = true at a time.
+
+model Period {
+  periodId  String   @id @map("period_id")
+  name      String   @map("name") @db.VarChar(100)
+  startDate DateTime @map("start_date") @db.Date
+  endDate   DateTime @map("end_date") @db.Date
+  isActive  Boolean  @default(false) @map("is_active")
+
+  @@map("periods")
+}
+
 // ─── 4. APPLICATION & DEPARTMENTAL LOGIC ─────────────────────────────────────
 
 model DepartmentApplicationInformation {

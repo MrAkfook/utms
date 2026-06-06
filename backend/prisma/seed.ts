@@ -43,8 +43,26 @@ async function main(): Promise<void> {
     });
   }
 
+  // Active application period — update directly in DB (Prisma Studio) to change dates/name.
+  await prisma.period.upsert({
+    where: { periodId: "period-spring-2026" },
+    create: {
+      periodId: "period-spring-2026",
+      name: "Yaz 2025-2026",
+      startDate: new Date("2026-06-01"),
+      endDate: new Date("2026-09-15"),
+      isActive: true,
+    },
+    update: {
+      name: "Yaz 2025-2026",
+      startDate: new Date("2026-06-01"),
+      endDate: new Date("2026-09-15"),
+      isActive: true,
+    },
+  });
+
   console.log(
-    `Seeded ${apps.length} applications and ${quotas.length} quotas into Neon.`
+    `Seeded ${apps.length} applications, ${quotas.length} quotas, and 1 active period into Neon.`
   );
 }
 

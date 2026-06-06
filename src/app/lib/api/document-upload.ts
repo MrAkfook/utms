@@ -134,6 +134,49 @@ export async function getActivePeriod(): Promise<ActivePeriodDto | null> {
   }
 }
 
+export interface StageLogDto {
+  stageKey: string;
+  actorName: string | null;
+  actorRole: string | null;
+  occurredAt: string;
+  notes: string | null;
+}
+
+export interface ApplicationDetailDto {
+  applicationId: string;
+  studentFullName: string;
+  currentStatus: string;
+  submittedAt: string;
+  lastModifiedAt: string;
+  intakeVerifiedAt: string | null;
+  intakeVerifiedBy: string | null;
+  routedToYdyo: boolean;
+  routedToDeansOffice: boolean;
+  ydyoExempt: boolean;
+  correctionReasons: unknown[];
+  rejectionReason: string | null;
+  rankingCategory: string | null;
+  hasIntibak: boolean;
+  hasLockedIntibak: boolean;
+  stageLogs: StageLogDto[];
+  targetDepartmentId: string;
+  targetFacultyId: string;
+  transferType: string;
+  targetedSemester: number | null;
+  submittedGpa: number;
+  submittedYksScore: number | null;
+  yksExamYear: number | null;
+  currentInstitution: string | null;
+  currentDepartment: string | null;
+}
+
+export async function getApplication(applicationId: string, userId: string): Promise<ApplicationDetailDto> {
+  const res = await fetch(`${BASE}/applications/${applicationId}`, {
+    headers: authHeaders(userId),
+  });
+  return handleResponse(res);
+}
+
 export async function cancelApplication(applicationId: string, userId: string): Promise<void> {
   const res = await fetch(`${BASE}/applications/${applicationId}`, {
     method: 'DELETE',

@@ -9,6 +9,7 @@ import { buildApplicationRouter } from "./modules/application/application.routes
 import { buildRankingRouter } from "./modules/ranking/ranking.routes";
 import { buildDeanRouter } from "./modules/dean/dean.routes";
 import { buildAuthRouter } from "./modules/auth/auth.routes";
+import { buildPeriodRouter } from "./modules/period/period.routes";
 
 export interface CreateAppOptions {
   container?: AppContainer;
@@ -47,6 +48,7 @@ export function createApp(options: CreateAppOptions = {}): { app: Express; conta
 
   // Scenario 1 (Login) — pre-authentication endpoints, mounted before mock-auth.
   app.use("/api/auth", buildAuthRouter(container));
+  app.use("/api/period", buildPeriodRouter());
 
   const auth = mockAuthMiddleware(container);
   app.use("/api/applications", auth, buildApplicationRouter());

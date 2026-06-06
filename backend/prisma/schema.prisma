@@ -128,6 +128,20 @@ model Student {
   @@map("student")
 }
 
+// ─── 4. PERIODS ───────────────────────────────────────────────────────────────
+// Modifiable directly in the DB (Prisma Studio / SQL). Only one row should
+// have isActive = true at a time.
+
+model Period {
+  periodId  String   @id @map("period_id")
+  name      String   @map("name") @db.VarChar(100)
+  startDate DateTime @map("start_date") @db.Date
+  endDate   DateTime @map("end_date") @db.Date
+  isActive  Boolean  @default(false) @map("is_active")
+
+  @@map("periods")
+}
+
 // ─── 4. APPLICATION & DEPARTMENTAL LOGIC ─────────────────────────────────────
 
 model DepartmentApplicationInformation {
@@ -184,11 +198,38 @@ model Application {
   documents     Document[]
   appeals       Appeal[]
   intibakTables IntibakTable[]
+  stageLogs     ApplicationStageLog[]
 
   @@index([studentId])
   @@index([targetDepartmentId])
   @@index([currentStatus])
   @@map("applications")
+}
+
+// ─── 5. APPLICATION STAGE TRACKING ───────────────────────────────────────────
+// One row per (application, stage). Written by whichever backend module
+// transitions the application into that stage. Read only by the student
+// timeline page — no other module depends on this table.
+//
+// stageKey values (matches the 10 timeline steps):
+//   APPLICATION_CREATED | DOCUMENT_UPLOAD | OIDB_INTAKE | YDYO_REVIEW |
+//   YGK_ACADEMIC | YGK_RANKING | INTIBAK | DEAN_REVIEW |
+//   BOARD_APPROVAL | RESULTS_PUBLISHED
+
+model ApplicationStageLog {
+  stageLogId    String    @id @default(uuid()) @map("stage_log_id")
+  applicationId String    @map("application_id")
+  stageKey      String    @map("stage_key") @db.VarChar(50)
+  actorName     String?   @map("actor_name") @db.VarChar(100)
+  actorRole     String?   @map("actor_role") @db.VarChar(100)
+  occurredAt    DateTime  @default(now()) @map("occurred_at")
+  notes         String?
+
+  application Application @relation(fields: [applicationId], references: [applicationId])
+
+  @@unique([applicationId, stageKey])
+  @@index([applicationId])
+  @@map("application_stage_logs")
 }
 
 // ─── 5. DOCUMENTS, INTIBAK & APPEALS ─────────────────────────────────────────

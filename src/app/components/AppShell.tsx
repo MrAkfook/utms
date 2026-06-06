@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getActivePeriod, type ActivePeriodDto } from '../lib/api/document-upload';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import {
@@ -121,6 +122,11 @@ export function AppShell({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS[currentRole] || []);
+  const [activePeriod, setActivePeriod] = useState<ActivePeriodDto | null>(null);
+
+  useEffect(() => {
+    getActivePeriod().then(setActivePeriod).catch(() => {});
+  }, []);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -193,8 +199,16 @@ export function AppShell({
         {sidebarOpen && (
           <div className="p-4 m-4 bg-gray-50 rounded-xl border border-gray-100">
             <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Aktif Dönem</div>
-            <div className="text-xs font-bold text-gray-900">Bahar 2024-2025</div>
-            <div className="text-[10px] text-red-600 font-medium mt-1">Bitiş: 15 Ocak 2025</div>
+            {activePeriod ? (
+              <>
+                <div className="text-xs font-bold text-gray-900">{activePeriod.name}</div>
+                <div className="text-[10px] text-red-600 font-medium mt-1">
+                  Bitiş: {new Date(activePeriod.endDate).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </div>
+              </>
+            ) : (
+              <div className="text-xs text-gray-400">Dönem bilgisi yüklenemedi</div>
+            )}
           </div>
         )}
       </aside>

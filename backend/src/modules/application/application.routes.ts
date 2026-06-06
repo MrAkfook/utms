@@ -67,6 +67,16 @@ export function buildApplicationRouter(): Router {
     }
   });
 
+  r.get("/:applicationId", requireRoles(UserRole.Student, UserRole.SystemAdmin), async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.authUser) throw new UnauthorizedError();
+      const detail = await service.getById(req.authUser.userId, req.params.applicationId);
+      res.json(detail);
+    } catch (e) {
+      next(e);
+    }
+  });
+
   r.delete("/:applicationId", requireRoles(UserRole.Student, UserRole.SystemAdmin), async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.authUser) throw new UnauthorizedError();

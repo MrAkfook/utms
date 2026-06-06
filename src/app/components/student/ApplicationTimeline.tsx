@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   Loader2,
   AlertCircle,
-  XCircle,
 } from 'lucide-react';
 import { getApplication, type ApplicationDetailDto } from '../../lib/api/document-upload';
 
@@ -20,7 +19,6 @@ interface ApplicationTimelineProps {
 }
 
 // ─── Status rank ──────────────────────────────────────────────────────────────
-// Higher = further along in the process. Used to determine completed/active/pending.
 
 const STATUS_RANK: Record<string, number> = {
   DRAFT: 0,
@@ -38,169 +36,235 @@ const STATUS_RANK: Record<string, number> = {
   RESULTS_PUBLISHED: 9,
 };
 
-function rank(status: string): number {
+function r(status: string): number {
   return STATUS_RANK[status] ?? 0;
 }
 
-// ─── Step types ───────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-type StepStatus = 'completed' | 'active' | 'pending' | 'skipped';
+type StepStatus = 'completed' | 'active' | 'pending';
 
 interface TimelineStep {
-  id: string;
   title: string;
-  description: string;
+  descriptions: { completed: string; active: string; pending: string };
   status: StepStatus;
   timestamp?: string;
-  actor?: string;
+  actor: string;
   notes?: string;
 }
 
-// ─── Derive steps from application data ───────────────────────────────────────
+// ─── Step builder ─────────────────────────────────────────────────────────────
 
-function deriveSteps(app: ApplicationDetailDto): TimelineStep[] {
-  const r = rank(app.currentStatus);
+function buildSteps(app: ApplicationDetailDto): TimelineStep[] {
+  const rank = r(app.currentStatus);
   const fmt = (iso: string | null | undefined) =>
-    iso ? new Date(iso).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' }) : undefined;
+    iso
+      ? new Date(iso).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' })
+      : undefined;
 
-  const isRejected =
-    app.currentStatus === 'REJECTED_AT_INTAKE' || app.currentStatus === 'RANKED_RED';
-  const isRanked = ['RANKED_ASIL', 'RANKED_YEDEK', 'RANKED_RED'].includes(app.currentStatus);
+  const isRejected = app.currentStatus === 'REJECTED_AT_INTAKE';
 
-  const steps: TimelineStep[] = [];
+  // Correction notes text
+  const correctionText =
+    Array.isArray(app.correctionReasons) && app.correctionReasons.length > 0
+      ? `Düzeltme talepleri: ${(app.correctionReasons as string[]).join(', ')}`
+      : undefined;
 
-  // 1 — Application submitted
-  steps.push({
-    id: 'submitted',
-    title: 'Başvuru Oluşturuldu',
-    description: 'Transfer başvurunuz sisteme kaydedildi',
+  // ── Step 1: Başvuru Oluşturma ──────────────────────────────────────────────
+  const step1: TimelineStep = {
+    title: 'Başvuru Oluşturma',
+    descriptions: {
+      completed: 'Transfer başvurunuz başarıyla sisteme iletildi',
+      active: 'Başvurunuz oluşturuluyor',
+      pending: 'Başvuru oluşturulacak',
+    },
     status: 'completed',
     timestamp: fmt(app.submittedAt),
-  });
+    actor: app.studentFullName,
+  };
 
-  // 2 — Document upload
-  const docCompleted = r >= rank('PENDING_OIDB_VERIFICATION');
-  const docActive =
-    app.currentStatus === 'PENDING_DOCUMENT_UPLOAD' ||
-    app.currentStatus === 'RETURNED_FOR_CORRECTION';
-  steps.push({
-    id: 'documents',
+  // ── Step 2: Belge Yükleme ─────────────────────────────────────────────────
+  const docStatus: StepStatus =
+    rank >= 3 ? 'completed' : rank >= 1 ? 'active' : 'pending';
+  const step2: TimelineStep = {
     title: 'Belge Yükleme',
-    description: 'Gerekli belgelerinizi sisteme yükleyiniz',
-    status: docCompleted ? 'completed' : docActive ? 'active' : 'pending',
+    descriptions: {
+      completed: 'Gerekli belgeler başarıyla sisteme yüklendi',
+      active: 'Belgelerinizi sisteme yüklemeniz bekleniyor',
+      pending: 'Gerekli belgeler sisteme yüklenecek',
+    },
+    status: docStatus,
+    actor: app.studentFullName,
     notes:
       app.currentStatus === 'RETURNED_FOR_CORRECTION'
-        ? 'Belgelerinizde eksiklik tespit edildi. Lütfen düzeltiniz.'
+        ? 'ÖİDB eksiklik bildirdi. Belgelerinizi düzelterek tekrar yükleyiniz.'
         : undefined,
-  });
+  };
 
-  // 3 — OIDB intake review
-  const oidbCompleted = r >= rank('INTAKE_VERIFIED');
-  const oidbActive = app.currentStatus === 'PENDING_OIDB_VERIFICATION';
-  const oidbRejected = app.currentStatus === 'REJECTED_AT_INTAKE';
+  // ── Step 3: ÖİDB Ön İnceleme ──────────────────────────────────────────────
+  let oidbStatus: StepStatus = rank >= 4 ? 'completed' : rank === 3 ? 'active' : 'pending';
   let oidbNotes: string | undefined;
-  if (oidbRejected && app.rejectionReason) oidbNotes = `Red gerekçesi: ${app.rejectionReason}`;
-  else if (Array.isArray(app.correctionReasons) && app.correctionReasons.length > 0)
-    oidbNotes = `Düzeltme talepleri: ${(app.correctionReasons as string[]).join(', ')}`;
-  steps.push({
-    id: 'oidb',
+  if (isRejected && app.rejectionReason) {
+    oidbNotes = `Red gerekçesi: ${app.rejectionReason}`;
+  } else if (app.currentStatus === 'RETURNED_FOR_CORRECTION' && correctionText) {
+    oidbNotes = correctionText;
+  }
+  const step3: TimelineStep = {
     title: 'ÖİDB Ön İnceleme',
-    description: 'Öğrenci İşleri Daire Başkanlığı belgelerinizi doğruluyor',
-    status: oidbRejected ? 'completed' : oidbCompleted ? 'completed' : oidbActive ? 'active' : 'pending',
+    descriptions: {
+      completed: 'Öğrenci İşleri belgelerinizi doğruladı',
+      active: 'Öğrenci İşleri belgelerinizi doğruluyor',
+      pending: 'Öğrenci İşleri Daire Başkanlığı belgelerinizi inceleyecek',
+    },
+    status: oidbStatus,
     timestamp: fmt(app.intakeVerifiedAt),
-    actor: app.intakeVerifiedBy ? `Personel ID: ${app.intakeVerifiedBy}` : undefined,
+    actor: 'ÖİDB Personeli',
     notes: oidbNotes,
-  });
+  };
 
-  // Early exit branch — rejected at intake
-  if (oidbRejected) {
-    steps.push({
-      id: 'rejected',
-      title: 'Başvuru Reddedildi',
-      description: app.rejectionReason ?? 'Başvurunuz ÖİDB aşamasında reddedildi.',
-      status: 'active',
-    });
-    return steps;
+  // ── Step 4: YDYO Dil Yeterlilik İncelemesi ────────────────────────────────
+  let ydyoStatus: StepStatus = 'pending';
+  let ydyoNotes: string | undefined;
+  if (rank >= 9) {
+    ydyoStatus = 'completed';
+  } else if (app.ydyoExempt && rank >= 5) {
+    ydyoStatus = 'completed';
+    ydyoNotes = 'Dil yeterlilik muafiyeti tanındı.';
+  } else if (rank >= 7) {
+    ydyoStatus = 'completed';
+  } else if (app.routedToYdyo && rank === 6) {
+    ydyoStatus = 'active';
   }
+  const step4: TimelineStep = {
+    title: 'YDYO Dil Yeterlilik İncelemesi',
+    descriptions: {
+      completed: 'Yabancı Diller Yüksekokulu dil yeterliliğinizi değerlendirdi',
+      active: 'Yabancı Diller Yüksekokulu dil muafiyetinizi değerlendiriyor',
+      pending: 'Yabancı Diller Yüksekokulu dil yeterliliğinizi değerlendirecek',
+    },
+    status: ydyoStatus,
+    actor: 'YDYO Komisyonu',
+    notes: ydyoNotes,
+  };
 
-  // 4 — YDYO language review (conditional)
-  if (app.routedToYdyo || app.ydyoExempt) {
-    const ydyoCompleted = r >= rank('IN_REVIEW_YGK');
-    const ydyoActive = app.currentStatus === 'IN_REVIEW_YDYO';
-    steps.push({
-      id: 'ydyo',
-      title: 'YDYO Dil Yeterlilik İncelemesi',
-      description: app.ydyoExempt
-        ? 'Dil yeterliliği muafiyet kapsamında değerlendirildi'
-        : 'Yabancı Diller Yüksekokulu dil yeterliliğinizi inceliyor',
-      status: app.ydyoExempt && r >= rank('PENDING_YGK_FORWARDING')
-        ? 'completed'
-        : ydyoCompleted ? 'completed' : ydyoActive ? 'active' : 'pending',
-      notes: app.ydyoExempt ? 'Dil yeterlilik muafiyeti tanındı.' : undefined,
-    });
-  }
-
-  // 5 — YGK academic review
-  const ygkCompleted = r >= rank('RANKED_ASIL');
-  const ygkActive =
-    app.currentStatus === 'IN_REVIEW_YGK' || app.currentStatus === 'PENDING_YGK_FORWARDING';
-  steps.push({
-    id: 'ygk',
+  // ── Step 5: YGK Akademik Değerlendirme ────────────────────────────────────
+  const ygkAcademicStatus: StepStatus =
+    rank >= 8 ? 'completed' : rank >= 5 ? 'active' : 'pending';
+  const step5: TimelineStep = {
     title: 'YGK Akademik Değerlendirme',
-    description: 'Bölüm komisyonu akademik uygunluğunuzu ve sıralamanızı belirliyor',
-    status: ygkCompleted ? 'completed' : ygkActive ? 'active' : 'pending',
-  });
+    descriptions: {
+      completed: 'Bölüm komisyonu akademik uygunluğunuzu değerlendirdi',
+      active: 'Bölüm komisyonu akademik uygunluğunuzu inceliyor',
+      pending: 'Bölüm komisyonu akademik uygunluğunuzu inceleyecek',
+    },
+    status: ygkAcademicStatus,
+    actor: 'YGK Komisyonu',
+  };
 
-  // 6 — Ranking result
-  steps.push({
-    id: 'ranking',
-    title: 'Sıralama Sonucu',
-    description: 'Kontenjan ve puan sıralamasına göre yerleştirme sonucu',
-    status: isRanked ? 'completed' : r >= rank('RANKED_ASIL') ? 'completed' : 'pending',
-    notes: app.rankingCategory
-      ? `Kategori: ${
-          app.rankingCategory === 'ASIL'
-            ? 'Asil'
-            : app.rankingCategory === 'YEDEK'
-            ? 'Yedek'
-            : 'Red'
-        }`
-      : undefined,
-  });
-
-  // 7 — Dean's office review (conditional)
-  if (app.routedToDeansOffice) {
-    const deanCompleted = r >= rank('RESULTS_PUBLISHED');
-    const deanActive = isRanked && !deanCompleted;
-    steps.push({
-      id: 'dean',
-      title: 'Dekanlık İncelemesi',
-      description: 'Fakülte dekanlığı değerlendirme paketini inceliyor',
-      status: deanCompleted ? 'completed' : deanActive ? 'active' : 'pending',
-    });
+  // ── Step 6: YGK Sıralama ──────────────────────────────────────────────────
+  const ygkRankStatus: StepStatus =
+    rank >= 8 ? 'completed' : rank === 7 ? 'active' : 'pending';
+  let rankNote: string | undefined;
+  if (app.rankingCategory) {
+    const cat =
+      app.rankingCategory === 'ASIL'
+        ? 'Asil Liste'
+        : app.rankingCategory === 'YEDEK'
+        ? 'Yedek Liste'
+        : 'Red';
+    rankNote = `Sonuç: ${cat}`;
   }
+  const step6: TimelineStep = {
+    title: 'YGK Sıralama',
+    descriptions: {
+      completed: 'Sıralama listesindeki yeriniz belirlendi',
+      active: 'Diğer adaylarla birlikte puan sıralamasına alınıyorsunuz',
+      pending: 'Diğer adaylarla birlikte puan sıralamasına alınacaksınız',
+    },
+    status: ygkRankStatus,
+    actor: 'YGK Komisyonu',
+    notes: rankNote,
+  };
 
-  // 8 — Results published
-  steps.push({
-    id: 'results',
+  // ── Step 7: Ders Muafiyeti (İntibak) ─────────────────────────────────────
+  let intibakStatus: StepStatus = 'pending';
+  if (app.hasLockedIntibak || rank >= 9) {
+    intibakStatus = 'completed';
+  } else if (app.hasIntibak && rank >= 8) {
+    intibakStatus = 'active';
+  } else if (rank >= 8) {
+    intibakStatus = 'active';
+  }
+  const step7: TimelineStep = {
+    title: 'Ders Muafiyeti (İntibak)',
+    descriptions: {
+      completed: 'Eşdeğer sayılacak dersleriniz belirlendi',
+      active: 'Eşdeğer sayılacak dersleriniz belirleniyor',
+      pending: 'Eşdeğer sayılacak dersleriniz belirlenecek',
+    },
+    status: intibakStatus,
+    actor: 'YGK Komisyonu',
+  };
+
+  // ── Step 8: Dekanlık İncelemesi ───────────────────────────────────────────
+  let deanStatus: StepStatus = 'pending';
+  if (rank >= 9) {
+    deanStatus = 'completed';
+  } else if (app.routedToDeansOffice && rank >= 8) {
+    deanStatus = 'active';
+  }
+  const step8: TimelineStep = {
+    title: 'Dekanlık İncelemesi',
+    descriptions: {
+      completed: 'Fakülte dekanlığı değerlendirme paketini onayladı',
+      active: 'Fakülte dekanlığı değerlendirme paketini onaylıyor',
+      pending: 'Fakülte dekanlığı değerlendirme paketini onaylayacak',
+    },
+    status: deanStatus,
+    actor: 'Dekan',
+  };
+
+  // ── Step 9: Fakülte Yönetim Kurulu Onayı ─────────────────────────────────
+  const boardStatus: StepStatus =
+    rank >= 9 ? 'completed' : rank >= 8 ? 'active' : 'pending';
+  const step9: TimelineStep = {
+    title: 'Fakülte Yönetim Kurulu Onayı',
+    descriptions: {
+      completed: 'Yönetim kurulundan nihai onay alındı',
+      active: 'Yönetim kurulu nihai onay sürecini değerlendiriyor',
+      pending: 'Yönetim kurulundan nihai onay süreci gerçekleşecek',
+    },
+    status: boardStatus,
+    actor: 'Fakülte Yönetim Kurulu',
+  };
+
+  // ── Step 10: Sonuçların İlanı ─────────────────────────────────────────────
+  const resultsStatus: StepStatus =
+    app.currentStatus === 'RESULTS_PUBLISHED' ? 'completed' : 'pending';
+  const step10: TimelineStep = {
     title: 'Sonuçların İlanı',
-    description: 'Nihai transfer kabulü sonuçları ilan edildi',
-    status: app.currentStatus === 'RESULTS_PUBLISHED' ? 'completed' : isRejected ? 'skipped' : 'pending',
-  });
+    descriptions: {
+      completed: 'Nihai transfer kabulü sonuçları sisteme yansıtıldı',
+      active: 'Nihai sonuçlar sisteme yansıtılıyor',
+      pending: 'Nihai sonuçlar sisteme yansıtılacak',
+    },
+    status: resultsStatus,
+    actor: 'ÖİDB Personeli',
+  };
 
-  return steps;
+  return [step1, step2, step3, step4, step5, step6, step7, step8, step9, step10];
 }
 
-// ─── Current status label ─────────────────────────────────────────────────────
+// ─── Status badge ─────────────────────────────────────────────────────────────
 
-function statusLabel(status: string): { label: string; className: string } {
+function statusBadge(status: string): { label: string; className: string } {
   const map: Record<string, { label: string; className: string }> = {
     PENDING_DOCUMENT_UPLOAD: { label: 'Belge Bekleniyor', className: 'bg-blue-100 text-blue-800' },
     RETURNED_FOR_CORRECTION: { label: 'Düzeltme İstendi', className: 'bg-orange-100 text-orange-800' },
     PENDING_OIDB_VERIFICATION: { label: 'ÖİDB İncelemesinde', className: 'bg-yellow-100 text-yellow-800' },
     INTAKE_VERIFIED: { label: 'ÖİDB Onaylandı', className: 'bg-green-100 text-green-800' },
     REJECTED_AT_INTAKE: { label: 'ÖİDB Reddetti', className: 'bg-red-100 text-red-800' },
-    PENDING_YGK_FORWARDING: { label: 'YGK\'ya İletiliyor', className: 'bg-yellow-100 text-yellow-800' },
+    PENDING_YGK_FORWARDING: { label: "YGK'ya İletiliyor", className: 'bg-yellow-100 text-yellow-800' },
     IN_REVIEW_YDYO: { label: 'YDYO İncelemesinde', className: 'bg-yellow-100 text-yellow-800' },
     IN_REVIEW_YGK: { label: 'YGK İncelemesinde', className: 'bg-yellow-100 text-yellow-800' },
     RANKED_ASIL: { label: 'Asil Liste', className: 'bg-green-100 text-green-800' },
@@ -243,9 +307,9 @@ export function ApplicationTimeline({ applicationId, userId, onBack }: Applicati
     );
   }
 
-  const steps = deriveSteps(app);
-  const { label, className } = statusLabel(app.currentStatus);
+  const steps = buildSteps(app);
   const activeStep = steps.find((s) => s.status === 'active');
+  const { label, className } = statusBadge(app.currentStatus);
 
   return (
     <div className="space-y-6">
@@ -265,9 +329,11 @@ export function ApplicationTimeline({ applicationId, userId, onBack }: Applicati
       <Card className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm text-gray-600 mb-1">Mevcut Durum</div>
+            <div className="text-sm text-gray-600 mb-1">Mevcut Aşama</div>
             <h2 className="text-gray-900">{activeStep?.title ?? label}</h2>
-            <p className="text-sm text-gray-600 mt-1">{activeStep?.description ?? ''}</p>
+            <p className="text-sm text-gray-600 mt-1">
+              {activeStep ? activeStep.descriptions.active : '—'}
+            </p>
           </div>
           <Badge className={className}>{label}</Badge>
         </div>
@@ -276,12 +342,14 @@ export function ApplicationTimeline({ applicationId, userId, onBack }: Applicati
       {/* Timeline */}
       <Card className="p-6">
         <h2 className="text-gray-900 mb-6">Başvuru İlerleme Durumu</h2>
-        <div className="space-y-6">
+        <div className="space-y-0">
           {steps.map((step, index) => {
             const isLast = index === steps.length - 1;
+            const desc = step.descriptions[step.status];
+
             return (
-              <div key={step.id} className="flex">
-                {/* Icon + connector line */}
+              <div key={step.title} className="flex">
+                {/* Icon + connector */}
                 <div className="flex flex-col items-center mr-4">
                   <div className="flex-shrink-0">
                     {step.status === 'completed' && (
@@ -296,67 +364,59 @@ export function ApplicationTimeline({ applicationId, userId, onBack }: Applicati
                     )}
                     {step.status === 'pending' && (
                       <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                        <Circle className="w-6 h-6 text-gray-400" />
-                      </div>
-                    )}
-                    {step.status === 'skipped' && (
-                      <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
-                        <XCircle className="w-6 h-6 text-red-400" />
+                        <Circle className="w-6 h-6 text-gray-300" />
                       </div>
                     )}
                   </div>
                   {!isLast && (
                     <div
-                      className={`w-0.5 h-full mt-2 ${
+                      className={`w-0.5 flex-1 mt-1 mb-1 ${
                         step.status === 'completed' ? 'bg-green-300' : 'bg-gray-200'
                       }`}
-                      style={{ minHeight: '40px' }}
+                      style={{ minHeight: '32px' }}
                     />
                   )}
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 pb-8">
-                  <div className="flex items-start justify-between mb-1">
-                    <div>
-                      <h3
-                        className={
-                          step.status === 'pending' || step.status === 'skipped'
-                            ? 'text-gray-400'
-                            : 'text-gray-900'
-                        }
-                      >
-                        {step.title}
-                      </h3>
-                      <p
-                        className={`text-sm ${
-                          step.status === 'pending' || step.status === 'skipped'
-                            ? 'text-gray-400'
-                            : 'text-gray-600'
-                        }`}
-                      >
-                        {step.description}
-                      </p>
-                    </div>
+                <div className="flex-1 pb-6">
+                  <div className="flex items-start justify-between">
+                    <h3
+                      className={`font-medium ${
+                        step.status === 'pending' ? 'text-gray-400' : 'text-gray-900'
+                      }`}
+                    >
+                      {step.title}
+                    </h3>
                     {step.timestamp && (
-                      <div className="text-xs text-gray-500 shrink-0 ml-4">{step.timestamp}</div>
+                      <span className="text-xs text-gray-400 shrink-0 ml-4">{step.timestamp}</span>
                     )}
                   </div>
 
-                  {step.actor && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      <span className="text-gray-600">İşlem Yapan:</span> {step.actor}
-                    </div>
-                  )}
+                  <p
+                    className={`text-sm mt-0.5 ${
+                      step.status === 'pending' ? 'text-gray-400' : 'text-gray-600'
+                    }`}
+                  >
+                    {desc}
+                  </p>
+
+                  <p
+                    className={`text-xs mt-1 ${
+                      step.status === 'pending' ? 'text-gray-300' : 'text-gray-500'
+                    }`}
+                  >
+                    <span className="font-medium">İşlem Yapan:</span> {step.actor}
+                  </p>
 
                   {step.notes && (
-                    <div className="mt-2 p-3 bg-blue-50 rounded-lg">
-                      <div className="text-xs text-blue-900">{step.notes}</div>
+                    <div className="mt-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                      <p className="text-xs text-blue-800">{step.notes}</p>
                     </div>
                   )}
 
                   {step.status === 'active' && (
-                    <div className="mt-2 flex items-center space-x-1">
+                    <div className="mt-2 flex items-center gap-1.5">
                       <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
                       <span className="text-xs text-yellow-700">Şu an işleniyor</span>
                     </div>
@@ -371,59 +431,63 @@ export function ApplicationTimeline({ applicationId, userId, onBack }: Applicati
       {/* Application Details */}
       <Card className="p-6">
         <h2 className="text-gray-900 mb-4">Başvuru Detayları</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
-            <div className="text-sm text-gray-600">Hedef Program</div>
-            <div className="text-gray-900">{app.targetDepartmentId}</div>
+            <div className="text-gray-500">Hedef Program</div>
+            <div className="text-gray-900 font-medium">{app.targetDepartmentId}</div>
           </div>
           <div>
-            <div className="text-sm text-gray-600">Hedef Fakülte</div>
-            <div className="text-gray-900">{app.targetFacultyId}</div>
+            <div className="text-gray-500">Hedef Fakülte</div>
+            <div className="text-gray-900 font-medium">{app.targetFacultyId}</div>
           </div>
           <div>
-            <div className="text-sm text-gray-600">Transfer Türü</div>
-            <div className="text-gray-900">{app.transferType}</div>
+            <div className="text-gray-500">Transfer Türü</div>
+            <div className="text-gray-900 font-medium">{app.transferType}</div>
           </div>
-          {app.targetedSemester && (
+          {app.targetedSemester ? (
             <div>
-              <div className="text-sm text-gray-600">Hedef Dönem</div>
-              <div className="text-gray-900">{app.targetedSemester}. Dönem</div>
+              <div className="text-gray-500">Hedef Dönem</div>
+              <div className="text-gray-900 font-medium">{app.targetedSemester}. Dönem</div>
             </div>
-          )}
+          ) : null}
           <div>
-            <div className="text-sm text-gray-600">GNO (GPA)</div>
-            <div className="text-gray-900">{app.submittedGpa.toFixed(2)} / 4.00</div>
+            <div className="text-gray-500">GNO (GPA)</div>
+            <div className="text-gray-900 font-medium">{app.submittedGpa.toFixed(2)} / 4.00</div>
           </div>
-          {app.submittedYksScore && (
+          {app.submittedYksScore ? (
             <div>
-              <div className="text-sm text-gray-600">ÖSYM Puanı</div>
-              <div className="text-gray-900">
-                {app.submittedYksScore.toFixed(2)}{app.yksExamYear ? ` (${app.yksExamYear})` : ''}
+              <div className="text-gray-500">ÖSYM Puanı</div>
+              <div className="text-gray-900 font-medium">
+                {app.submittedYksScore.toFixed(2)}
+                {app.yksExamYear ? ` (${app.yksExamYear})` : ''}
               </div>
             </div>
-          )}
-          {app.currentInstitution && (
+          ) : null}
+          {app.currentInstitution ? (
             <div>
-              <div className="text-sm text-gray-600">Mevcut Kurum</div>
-              <div className="text-gray-900">{app.currentInstitution}</div>
+              <div className="text-gray-500">Mevcut Kurum</div>
+              <div className="text-gray-900 font-medium">{app.currentInstitution}</div>
             </div>
-          )}
-          {app.currentDepartment && (
+          ) : null}
+          {app.currentDepartment ? (
             <div>
-              <div className="text-sm text-gray-600">Mevcut Bölüm</div>
-              <div className="text-gray-900">{app.currentDepartment}</div>
+              <div className="text-gray-500">Mevcut Bölüm</div>
+              <div className="text-gray-900 font-medium">{app.currentDepartment}</div>
             </div>
-          )}
+          ) : null}
           <div>
-            <div className="text-sm text-gray-600">Başvuru Tarihi</div>
-            <div className="text-gray-900">
+            <div className="text-gray-500">Başvuru Tarihi</div>
+            <div className="text-gray-900 font-medium">
               {new Date(app.submittedAt).toLocaleDateString('tr-TR', { dateStyle: 'long' })}
             </div>
           </div>
           <div>
-            <div className="text-sm text-gray-600">Son Güncelleme</div>
-            <div className="text-gray-900">
-              {new Date(app.lastModifiedAt).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' })}
+            <div className="text-gray-500">Son Güncelleme</div>
+            <div className="text-gray-900 font-medium">
+              {new Date(app.lastModifiedAt).toLocaleString('tr-TR', {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              })}
             </div>
           </div>
         </div>

@@ -136,6 +136,7 @@ export async function getActivePeriod(): Promise<ActivePeriodDto | null> {
 
 export interface ApplicationDetailDto {
   applicationId: string;
+  studentFullName: string;
   currentStatus: string;
   submittedAt: string;
   lastModifiedAt: string;
@@ -147,6 +148,8 @@ export interface ApplicationDetailDto {
   correctionReasons: unknown[];
   rejectionReason: string | null;
   rankingCategory: string | null;
+  hasIntibak: boolean;
+  hasLockedIntibak: boolean;
   targetDepartmentId: string;
   targetFacultyId: string;
   transferType: string;

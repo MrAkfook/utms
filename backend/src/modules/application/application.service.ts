@@ -29,6 +29,7 @@ export interface ApplicationSummaryDto {
 
 export interface ApplicationDetailDto {
   applicationId: string;
+  studentFullName: string;
   currentStatus: string;
   submittedAt: string;
   lastModifiedAt: string;
@@ -40,6 +41,8 @@ export interface ApplicationDetailDto {
   correctionReasons: unknown[];
   rejectionReason: string | null;
   rankingCategory: string | null;
+  hasIntibak: boolean;
+  hasLockedIntibak: boolean;
   targetDepartmentId: string;
   targetFacultyId: string;
   transferType: string;
@@ -112,13 +115,18 @@ export class ApplicationService {
   }
 
   async getById(studentId: string, applicationId: string): Promise<ApplicationDetailDto> {
-    const app = await prisma.application.findFirst({
-      where: { applicationId, studentId },
-    });
+    const [app, intibakTable] = await Promise.all([
+      prisma.application.findFirst({ where: { applicationId, studentId } }),
+      prisma.intibakTable.findFirst({
+        where: { applicationId },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
     if (!app) throw new Error("Application not found");
 
     return {
       applicationId: app.applicationId,
+      studentFullName: app.studentFullName,
       currentStatus: app.currentStatus,
       submittedAt: app.submittedAt.toISOString(),
       lastModifiedAt: app.lastModifiedAt.toISOString(),
@@ -130,6 +138,8 @@ export class ApplicationService {
       correctionReasons: Array.isArray(app.correctionReasons) ? app.correctionReasons as unknown[] : [],
       rejectionReason: app.rejectionReason ?? null,
       rankingCategory: app.rankingCategory ?? null,
+      hasIntibak: !!intibakTable,
+      hasLockedIntibak: intibakTable?.isLocked ?? false,
       targetDepartmentId: app.targetDepartmentId,
       targetFacultyId: app.targetFacultyId,
       transferType: app.transferType,

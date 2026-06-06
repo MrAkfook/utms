@@ -276,6 +276,43 @@ function buildSteps(app: ApplicationDetailDto): TimelineStep[] {
   return [step1, step2, step3, step4, step5, step6, step7, step8, step9, step10];
 }
 
+// ─── Display label maps ───────────────────────────────────────────────────────
+
+const DEPARTMENT_LABELS: Record<string, string> = {
+  // Values submitted by ApplicationForm
+  "computer-eng": "Bilgisayar Mühendisliği",
+  "electrical-eng": "Elektrik-Elektronik Mühendisliği",
+  "mechanical-eng": "Makine Mühendisliği",
+  "industrial-eng": "Endüstri Mühendisliği",
+  "civil-eng": "İnşaat Mühendisliği",
+  "architecture": "Mimarlık",
+  // Values used in seed / OIDB data
+  "dept-computer-engineering": "Bilgisayar Mühendisliği",
+  "dept-electrical-engineering": "Elektrik-Elektronik Mühendisliği",
+  "dept-mechanical-engineering": "Makine Mühendisliği",
+  "dept-architecture": "Mimarlık",
+  "dept-civil": "İnşaat Mühendisliği",
+};
+
+const FACULTY_LABELS: Record<string, string> = {
+  "faculty-engineering": "Mühendislik Fakültesi",
+  "faculty-architecture": "Mimarlık Fakültesi",
+};
+
+const TRANSFER_TYPE_LABELS: Record<string, string> = {
+  "KURUMLAR_ARASI": "Kurumlar Arası Yatay Geçiş",
+  "KURUM_ICI": "Kurum İçi Yatay Geçiş",
+  "DGS": "Dikey Geçiş (DGS)",
+  "HORIZONTAL": "Kurumlar Arası Yatay Geçiş",
+  "VERTICAL": "Dikey Geçiş",
+  // Seed data value
+  "Kurumlar Arasi Yatay Gecis": "Kurumlar Arası Yatay Geçiş",
+};
+
+function deptLabel(id: string) { return DEPARTMENT_LABELS[id] ?? id; }
+function facultyLabel(id: string) { return FACULTY_LABELS[id] ?? id; }
+function transferLabel(type: string) { return TRANSFER_TYPE_LABELS[type] ?? type; }
+
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
 function statusBadge(status: string): { label: string; className: string } {
@@ -455,15 +492,15 @@ export function ApplicationTimeline({ applicationId, userId, onBack }: Applicati
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
             <div className="text-gray-500">Hedef Program</div>
-            <div className="text-gray-900 font-medium">{app.targetDepartmentId}</div>
+            <div className="text-gray-900 font-medium">{deptLabel(app.targetDepartmentId)}</div>
           </div>
           <div>
             <div className="text-gray-500">Hedef Fakülte</div>
-            <div className="text-gray-900 font-medium">{app.targetFacultyId}</div>
+            <div className="text-gray-900 font-medium">{facultyLabel(app.targetFacultyId)}</div>
           </div>
           <div>
             <div className="text-gray-500">Transfer Türü</div>
-            <div className="text-gray-900 font-medium">{app.transferType}</div>
+            <div className="text-gray-900 font-medium">{transferLabel(app.transferType)}</div>
           </div>
           {app.targetedSemester ? (
             <div>

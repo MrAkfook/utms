@@ -27,6 +27,14 @@ export interface ApplicationSummaryDto {
   uploadedDocumentCount: number;
 }
 
+export interface StageLogDto {
+  stageKey: string;
+  actorName: string | null;
+  actorRole: string | null;
+  occurredAt: string;
+  notes: string | null;
+}
+
 export interface ApplicationDetailDto {
   applicationId: string;
   studentFullName: string;
@@ -43,6 +51,7 @@ export interface ApplicationDetailDto {
   rankingCategory: string | null;
   hasIntibak: boolean;
   hasLockedIntibak: boolean;
+  stageLogs: StageLogDto[];
   targetDepartmentId: string;
   targetFacultyId: string;
   transferType: string;
@@ -115,11 +124,15 @@ export class ApplicationService {
   }
 
   async getById(studentId: string, applicationId: string): Promise<ApplicationDetailDto> {
-    const [app, intibakTable] = await Promise.all([
+    const [app, intibakTable, stageLogs] = await Promise.all([
       prisma.application.findFirst({ where: { applicationId, studentId } }),
       prisma.intibakTable.findFirst({
         where: { applicationId },
         orderBy: { createdAt: "desc" },
+      }),
+      prisma.applicationStageLog.findMany({
+        where: { applicationId },
+        orderBy: { occurredAt: "asc" },
       }),
     ]);
     if (!app) throw new Error("Application not found");
@@ -140,6 +153,13 @@ export class ApplicationService {
       rankingCategory: app.rankingCategory ?? null,
       hasIntibak: !!intibakTable,
       hasLockedIntibak: intibakTable?.isLocked ?? false,
+      stageLogs: stageLogs.map((l) => ({
+        stageKey: l.stageKey,
+        actorName: l.actorName ?? null,
+        actorRole: l.actorRole ?? null,
+        occurredAt: l.occurredAt.toISOString(),
+        notes: l.notes ?? null,
+      })),
       targetDepartmentId: app.targetDepartmentId,
       targetFacultyId: app.targetFacultyId,
       transferType: app.transferType,

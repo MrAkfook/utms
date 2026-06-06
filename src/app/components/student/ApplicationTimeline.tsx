@@ -10,7 +10,7 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
-import { getApplication, type ApplicationDetailDto } from '../../lib/api/document-upload';
+import { getApplication, type ApplicationDetailDto, type StageLogDto } from '../../lib/api/document-upload';
 
 interface ApplicationTimelineProps {
   applicationId: string;
@@ -62,6 +62,18 @@ function buildSteps(app: ApplicationDetailDto): TimelineStep[] {
       ? new Date(iso).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' })
       : undefined;
 
+  // Build a lookup map from the dedicated stage log table
+  const logMap = new Map<string, StageLogDto>(app.stageLogs.map((l) => [l.stageKey, l]));
+  const log = (key: string) => logMap.get(key);
+
+  // Helper: actor display — prefers stage log, falls back to provided default
+  const actor = (key: string, fallback: string) => {
+    const entry = log(key);
+    if (!entry) return fallback;
+    if (entry.actorName && entry.actorRole) return `${entry.actorName} (${entry.actorRole})`;
+    return entry.actorName ?? entry.actorRole ?? fallback;
+  };
+
   const isRejected = app.currentStatus === 'REJECTED_AT_INTAKE';
 
   // Correction notes text
@@ -79,8 +91,8 @@ function buildSteps(app: ApplicationDetailDto): TimelineStep[] {
       pending: 'Başvuru oluşturulacak',
     },
     status: 'completed',
-    timestamp: fmt(app.submittedAt),
-    actor: app.studentFullName,
+    timestamp: fmt(log('APPLICATION_CREATED')?.occurredAt ?? app.submittedAt),
+    actor: actor('APPLICATION_CREATED', app.studentFullName),
   };
 
   // ── Step 2: Belge Yükleme ─────────────────────────────────────────────────
@@ -94,7 +106,8 @@ function buildSteps(app: ApplicationDetailDto): TimelineStep[] {
       pending: 'Gerekli belgeler sisteme yüklenecek',
     },
     status: docStatus,
-    actor: app.studentFullName,
+    timestamp: fmt(log('DOCUMENT_UPLOAD')?.occurredAt),
+    actor: actor('DOCUMENT_UPLOAD', app.studentFullName),
     notes:
       app.currentStatus === 'RETURNED_FOR_CORRECTION'
         ? 'ÖİDB eksiklik bildirdi. Belgelerinizi düzelterek tekrar yükleyiniz.'
@@ -102,13 +115,14 @@ function buildSteps(app: ApplicationDetailDto): TimelineStep[] {
   };
 
   // ── Step 3: ÖİDB Ön İnceleme ──────────────────────────────────────────────
-  let oidbStatus: StepStatus = rank >= 4 ? 'completed' : rank === 3 ? 'active' : 'pending';
+  const oidbStatus: StepStatus = rank >= 4 ? 'completed' : rank === 3 ? 'active' : 'pending';
   let oidbNotes: string | undefined;
   if (isRejected && app.rejectionReason) {
     oidbNotes = `Red gerekçesi: ${app.rejectionReason}`;
   } else if (app.currentStatus === 'RETURNED_FOR_CORRECTION' && correctionText) {
     oidbNotes = correctionText;
   }
+  if (log('OIDB_INTAKE')?.notes) oidbNotes = log('OIDB_INTAKE')!.notes!;
   const step3: TimelineStep = {
     title: 'ÖİDB Ön İnceleme',
     descriptions: {
@@ -117,24 +131,21 @@ function buildSteps(app: ApplicationDetailDto): TimelineStep[] {
       pending: 'Öğrenci İşleri Daire Başkanlığı belgelerinizi inceleyecek',
     },
     status: oidbStatus,
-    timestamp: fmt(app.intakeVerifiedAt),
-    actor: 'ÖİDB Personeli',
+    timestamp: fmt(log('OIDB_INTAKE')?.occurredAt ?? app.intakeVerifiedAt),
+    actor: actor('OIDB_INTAKE', 'ÖİDB Personeli'),
     notes: oidbNotes,
   };
 
   // ── Step 4: YDYO Dil Yeterlilik İncelemesi ────────────────────────────────
   let ydyoStatus: StepStatus = 'pending';
   let ydyoNotes: string | undefined;
-  if (rank >= 9) {
-    ydyoStatus = 'completed';
-  } else if (app.ydyoExempt && rank >= 5) {
-    ydyoStatus = 'completed';
-    ydyoNotes = 'Dil yeterlilik muafiyeti tanındı.';
-  } else if (rank >= 7) {
+  if (rank >= 9 || (app.ydyoExempt && rank >= 5) || rank >= 7) {
     ydyoStatus = 'completed';
   } else if (app.routedToYdyo && rank === 6) {
     ydyoStatus = 'active';
   }
+  if (app.ydyoExempt) ydyoNotes = 'Dil yeterlilik muafiyeti tanındı.';
+  if (log('YDYO_REVIEW')?.notes) ydyoNotes = log('YDYO_REVIEW')!.notes!;
   const step4: TimelineStep = {
     title: 'YDYO Dil Yeterlilik İncelemesi',
     descriptions: {
@@ -143,7 +154,8 @@ function buildSteps(app: ApplicationDetailDto): TimelineStep[] {
       pending: 'Yabancı Diller Yüksekokulu dil yeterliliğinizi değerlendirecek',
     },
     status: ydyoStatus,
-    actor: 'YDYO Komisyonu',
+    timestamp: fmt(log('YDYO_REVIEW')?.occurredAt),
+    actor: actor('YDYO_REVIEW', 'YDYO Komisyonu'),
     notes: ydyoNotes,
   };
 
@@ -158,14 +170,16 @@ function buildSteps(app: ApplicationDetailDto): TimelineStep[] {
       pending: 'Bölüm komisyonu akademik uygunluğunuzu inceleyecek',
     },
     status: ygkAcademicStatus,
-    actor: 'YGK Komisyonu',
+    timestamp: fmt(log('YGK_ACADEMIC')?.occurredAt),
+    actor: actor('YGK_ACADEMIC', 'YGK Komisyonu'),
+    notes: log('YGK_ACADEMIC')?.notes ?? undefined,
   };
 
   // ── Step 6: YGK Sıralama ──────────────────────────────────────────────────
   const ygkRankStatus: StepStatus =
     rank >= 8 ? 'completed' : rank === 7 ? 'active' : 'pending';
-  let rankNote: string | undefined;
-  if (app.rankingCategory) {
+  let rankNote: string | undefined = log('YGK_RANKING')?.notes ?? undefined;
+  if (!rankNote && app.rankingCategory) {
     const cat =
       app.rankingCategory === 'ASIL'
         ? 'Asil Liste'
@@ -182,7 +196,8 @@ function buildSteps(app: ApplicationDetailDto): TimelineStep[] {
       pending: 'Diğer adaylarla birlikte puan sıralamasına alınacaksınız',
     },
     status: ygkRankStatus,
-    actor: 'YGK Komisyonu',
+    timestamp: fmt(log('YGK_RANKING')?.occurredAt),
+    actor: actor('YGK_RANKING', 'YGK Komisyonu'),
     notes: rankNote,
   };
 
@@ -190,8 +205,6 @@ function buildSteps(app: ApplicationDetailDto): TimelineStep[] {
   let intibakStatus: StepStatus = 'pending';
   if (app.hasLockedIntibak || rank >= 9) {
     intibakStatus = 'completed';
-  } else if (app.hasIntibak && rank >= 8) {
-    intibakStatus = 'active';
   } else if (rank >= 8) {
     intibakStatus = 'active';
   }
@@ -203,7 +216,9 @@ function buildSteps(app: ApplicationDetailDto): TimelineStep[] {
       pending: 'Eşdeğer sayılacak dersleriniz belirlenecek',
     },
     status: intibakStatus,
-    actor: 'YGK Komisyonu',
+    timestamp: fmt(log('INTIBAK')?.occurredAt),
+    actor: actor('INTIBAK', 'YGK Komisyonu'),
+    notes: log('INTIBAK')?.notes ?? undefined,
   };
 
   // ── Step 8: Dekanlık İncelemesi ───────────────────────────────────────────
@@ -221,7 +236,9 @@ function buildSteps(app: ApplicationDetailDto): TimelineStep[] {
       pending: 'Fakülte dekanlığı değerlendirme paketini onaylayacak',
     },
     status: deanStatus,
-    actor: 'Dekan',
+    timestamp: fmt(log('DEAN_REVIEW')?.occurredAt),
+    actor: actor('DEAN_REVIEW', 'Dekan'),
+    notes: log('DEAN_REVIEW')?.notes ?? undefined,
   };
 
   // ── Step 9: Fakülte Yönetim Kurulu Onayı ─────────────────────────────────
@@ -235,7 +252,9 @@ function buildSteps(app: ApplicationDetailDto): TimelineStep[] {
       pending: 'Yönetim kurulundan nihai onay süreci gerçekleşecek',
     },
     status: boardStatus,
-    actor: 'Fakülte Yönetim Kurulu',
+    timestamp: fmt(log('BOARD_APPROVAL')?.occurredAt),
+    actor: actor('BOARD_APPROVAL', 'Fakülte Yönetim Kurulu'),
+    notes: log('BOARD_APPROVAL')?.notes ?? undefined,
   };
 
   // ── Step 10: Sonuçların İlanı ─────────────────────────────────────────────
@@ -249,7 +268,9 @@ function buildSteps(app: ApplicationDetailDto): TimelineStep[] {
       pending: 'Nihai sonuçlar sisteme yansıtılacak',
     },
     status: resultsStatus,
-    actor: 'ÖİDB Personeli',
+    timestamp: fmt(log('RESULTS_PUBLISHED')?.occurredAt),
+    actor: actor('RESULTS_PUBLISHED', 'ÖİDB Personeli'),
+    notes: log('RESULTS_PUBLISHED')?.notes ?? undefined,
   };
 
   return [step1, step2, step3, step4, step5, step6, step7, step8, step9, step10];

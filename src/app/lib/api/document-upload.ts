@@ -134,6 +134,14 @@ export async function getActivePeriod(): Promise<ActivePeriodDto | null> {
   }
 }
 
+export interface StageLogDto {
+  stageKey: string;
+  actorName: string | null;
+  actorRole: string | null;
+  occurredAt: string;
+  notes: string | null;
+}
+
 export interface ApplicationDetailDto {
   applicationId: string;
   studentFullName: string;
@@ -150,6 +158,7 @@ export interface ApplicationDetailDto {
   rankingCategory: string | null;
   hasIntibak: boolean;
   hasLockedIntibak: boolean;
+  stageLogs: StageLogDto[];
   targetDepartmentId: string;
   targetFacultyId: string;
   transferType: string;

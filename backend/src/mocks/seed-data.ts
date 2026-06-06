@@ -1,6 +1,7 @@
 import {
   Application,
   ApplicationStatus,
+  DepartmentQuota,
   Document,
   DocumentType,
   PreviousCourse,
@@ -209,8 +210,8 @@ function buildApplication(partial: Partial<Application> & { applicationId: strin
   };
 }
 
-function seedApplications(c: AppContainer): void {
-  const apps: Application[] = [
+export function buildSeedApplications(): Application[] {
+  return [
     buildApplication({
       applicationId: "app-1001",
       studentId: "student-ahmet-yilmaz",
@@ -571,7 +572,10 @@ function seedApplications(c: AppContainer): void {
       preScreening: { isPassed: true, failedRules: [] },
     }),
   ];
-  for (const a of apps) c.applications.put(a);
+}
+
+function seedApplications(c: AppContainer): void {
+  for (const a of buildSeedApplications()) c.applications.put(a);
 }
 
 function makeDoc(applicationId: string, type: DocumentType, hasBarcode: boolean, suffix = ""): Document {
@@ -685,16 +689,22 @@ function seedOcrFor(c: AppContainer): void {
   c.ocr.setTranscriptFor("doc-app-asil-can-aydin-transcript", { ok: true, courses: [] });
 }
 
+export function buildSeedQuotas(): DepartmentQuota[] {
+  return [
+    // Test Case 5A: Bilgisayar Müh. — Asil:2, Yedek:3
+    { departmentId: DEPT_CMPE, periodId: PERIOD_SCENARIOS, asilQuota: 2, yedekQuota: 3 },
+    // Test Case 5K: Makine Müh. — Asil:2, Yedek:1
+    { departmentId: DEPT_ME, periodId: PERIOD_SCENARIOS, asilQuota: 2, yedekQuota: 1 },
+    // Mimarlık — Asil:2, Yedek:1
+    { departmentId: DEPT_ARCH, periodId: PERIOD_SCENARIOS, asilQuota: 2, yedekQuota: 1 },
+    // Bahar 2026 dönem kotaları
+    { departmentId: DEPT_CMPE, periodId: PERIOD_ID, asilQuota: 8, yedekQuota: 4 },
+    { departmentId: DEPT_EE, periodId: PERIOD_ID, asilQuota: 4, yedekQuota: 2 },
+  ];
+}
+
 function seedQuotas(c: AppContainer): void {
-  // Test Case 5A: Bilgisayar Müh. — Asil:2, Yedek:3
-  c.quotas.put({ departmentId: DEPT_CMPE, periodId: PERIOD_SCENARIOS, asilQuota: 2, yedekQuota: 3 });
-  // Test Case 5K: Makine Müh. — Asil:2, Yedek:1
-  c.quotas.put({ departmentId: DEPT_ME, periodId: PERIOD_SCENARIOS, asilQuota: 2, yedekQuota: 1 });
-  // Mimarlık — Asil:2, Yedek:1
-  c.quotas.put({ departmentId: DEPT_ARCH, periodId: PERIOD_SCENARIOS, asilQuota: 2, yedekQuota: 1 });
-  // Bahar 2026 dönem kotaları
-  c.quotas.put({ departmentId: DEPT_CMPE, periodId: PERIOD_ID, asilQuota: 8, yedekQuota: 4 });
-  c.quotas.put({ departmentId: DEPT_EE, periodId: PERIOD_ID, asilQuota: 4, yedekQuota: 2 });
+  for (const q of buildSeedQuotas()) c.quotas.put(q);
 }
 
 export function seedAll(c: AppContainer): void {

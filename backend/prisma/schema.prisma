@@ -131,10 +131,16 @@ model Student {
 // ─── 4. APPLICATION & DEPARTMENTAL LOGIC ─────────────────────────────────────
 
 model DepartmentApplicationInformation {
-  departmentId            String  @id @default(uuid()) @map("department_id")
+  departmentId            String  @map("department_id")
+  // Scenario 5: quotas are defined per (department, period) with an asil/yedek
+  // split — this replaces the in-memory DepartmentQuota repository.
+  periodId                String  @map("period_id")
   departmentSpecificRules String? @map("department_specific_rules")
   quotaInformation        Int?    @map("quota_information")
+  asilQuota               Int?    @map("asil_quota")
+  yedekQuota              Int?    @map("yedek_quota")
 
+  @@id([departmentId, periodId])
   @@map("department_application_information")
 }
 

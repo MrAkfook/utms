@@ -5,13 +5,32 @@ import { RankingService } from "./ranking.service";
 import { RankingController } from "./ranking.controller";
 import { AuditLogger } from "../../shared/audit/audit-logger";
 import { AppContainer } from "../../shared/container";
+import { asyncHandler } from "../../shared/middleware/async-handler";
+import {
+  IAsyncApplicationRepository,
+  IAsyncQuotaRepository,
+  InMemoryAsyncApplicationRepository,
+  InMemoryAsyncQuotaRepository,
+  PrismaApplicationRepository,
+  PrismaQuotaRepository,
+} from "../../shared/repositories";
 
 export function buildRankingRouter(container: AppContainer): Router {
+  // Runtime reads/writes Scenario 5 ranking data in Neon (Prisma). Tests run
+  // against the in-memory container so the existing HTTP fixtures keep working
+  // unchanged. Jest sets NODE_ENV=test; the dev/prod server leaves it as
+  // development/production.
+  const useDatabase = process.env.NODE_ENV !== "test";
+
+  const applications: IAsyncApplicationRepository = useDatabase
+    ? new PrismaApplicationRepository()
+    : new InMemoryAsyncApplicationRepository(container.applications);
+  const quotas: IAsyncQuotaRepository = useDatabase
+    ? new PrismaQuotaRepository()
+    : new InMemoryAsyncQuotaRepository(container.quotas);
+
   const audit = new AuditLogger(container.audit);
-  const service = new RankingService({
-    applications: container.applications,
-    audit,
-  });
+  const service = new RankingService({ applications, audit });
   const controller = new RankingController(service);
   const r = Router();
 
@@ -25,14 +44,17 @@ export function buildRankingRouter(container: AppContainer): Router {
   r.get(
     "/quota/:departmentId/:periodId",
     requireRoles(UserRole.YgkMember, UserRole.YgkChair, UserRole.SystemAdmin),
-    (req, res) => {
+    asyncHandler(async (req, res) => {
       const { departmentId, periodId } = req.params;
-      const quota = container.quotas.find(departmentId, periodId);
+      const quota = await quotas.find(departmentId, periodId);
       if (!quota) {
-        return res.status(404).json({ error: "NOT_FOUND", message: "Bu bölüm/dönem için kota tanımlanmamış" });
+        return res.status(404).json({
+          error: "NOT_FOUND",
+          message: "Bu bölüm/dönem için kota tanımlanmamış",
+        });
       }
       return res.json(quota);
-    }
+    })
   );
 
   /**
@@ -42,12 +64,8 @@ export function buildRankingRouter(container: AppContainer): Router {
    */
   r.get(
     "/queue",
-    requireRoles(
-      UserRole.YgkMember,
-      UserRole.YgkChair,
-      UserRole.SystemAdmin
-    ),
-    controller.getQueue
+    requireRoles(UserRole.YgkMember, UserRole.YgkChair, UserRole.SystemAdmin),
+    asyncHandler(controller.getQueue)
   );
 
   /**
@@ -58,12 +76,8 @@ export function buildRankingRouter(container: AppContainer): Router {
    */
   r.post(
     "/:applicationId/start-review",
-    requireRoles(
-      UserRole.YgkMember,
-      UserRole.YgkChair,
-      UserRole.SystemAdmin
-    ),
-    controller.startReview
+    requireRoles(UserRole.YgkMember, UserRole.YgkChair, UserRole.SystemAdmin),
+    asyncHandler(controller.startReview)
   );
 
   /**
@@ -73,12 +87,8 @@ export function buildRankingRouter(container: AppContainer): Router {
    */
   r.get(
     "/:applicationId/eligibility",
-    requireRoles(
-      UserRole.YgkMember,
-      UserRole.YgkChair,
-      UserRole.SystemAdmin
-    ),
-    controller.getEligibility
+    requireRoles(UserRole.YgkMember, UserRole.YgkChair, UserRole.SystemAdmin),
+    asyncHandler(controller.getEligibility)
   );
 
   /**
@@ -88,12 +98,8 @@ export function buildRankingRouter(container: AppContainer): Router {
    */
   r.post(
     "/:applicationId/eligibility",
-    requireRoles(
-      UserRole.YgkMember,
-      UserRole.YgkChair,
-      UserRole.SystemAdmin
-    ),
-    controller.saveEligibilityDecision
+    requireRoles(UserRole.YgkMember, UserRole.YgkChair, UserRole.SystemAdmin),
+    asyncHandler(controller.saveEligibilityDecision)
   );
 
   /**
@@ -103,12 +109,8 @@ export function buildRankingRouter(container: AppContainer): Router {
    */
   r.get(
     "/:applicationId/conditions",
-    requireRoles(
-      UserRole.YgkMember,
-      UserRole.YgkChair,
-      UserRole.SystemAdmin
-    ),
-    controller.getDepartmentConditions
+    requireRoles(UserRole.YgkMember, UserRole.YgkChair, UserRole.SystemAdmin),
+    asyncHandler(controller.getDepartmentConditions)
   );
 
   /**
@@ -118,12 +120,8 @@ export function buildRankingRouter(container: AppContainer): Router {
    */
   r.post(
     "/:applicationId/conditions",
-    requireRoles(
-      UserRole.YgkMember,
-      UserRole.YgkChair,
-      UserRole.SystemAdmin
-    ),
-    controller.saveConditionsDecision
+    requireRoles(UserRole.YgkMember, UserRole.YgkChair, UserRole.SystemAdmin),
+    asyncHandler(controller.saveConditionsDecision)
   );
 
   /**
@@ -133,12 +131,8 @@ export function buildRankingRouter(container: AppContainer): Router {
    */
   r.get(
     "/:applicationId/score",
-    requireRoles(
-      UserRole.YgkMember,
-      UserRole.YgkChair,
-      UserRole.SystemAdmin
-    ),
-    controller.getScoreCalculation
+    requireRoles(UserRole.YgkMember, UserRole.YgkChair, UserRole.SystemAdmin),
+    asyncHandler(controller.getScoreCalculation)
   );
 
   /**
@@ -148,12 +142,8 @@ export function buildRankingRouter(container: AppContainer): Router {
    */
   r.post(
     "/:applicationId/score/confirm",
-    requireRoles(
-      UserRole.YgkMember,
-      UserRole.YgkChair,
-      UserRole.SystemAdmin
-    ),
-    controller.confirmScore
+    requireRoles(UserRole.YgkMember, UserRole.YgkChair, UserRole.SystemAdmin),
+    asyncHandler(controller.confirmScore)
   );
 
   /**
@@ -163,12 +153,8 @@ export function buildRankingRouter(container: AppContainer): Router {
    */
   r.post(
     "/:applicationId/score/invalidate",
-    requireRoles(
-      UserRole.YgkMember,
-      UserRole.YgkChair,
-      UserRole.SystemAdmin
-    ),
-    controller.invalidateScore
+    requireRoles(UserRole.YgkMember, UserRole.YgkChair, UserRole.SystemAdmin),
+    asyncHandler(controller.invalidateScore)
   );
 
   // ─── Batch Ranking Routes ─────────────────────────────────────────────────
@@ -181,7 +167,7 @@ export function buildRankingRouter(container: AppContainer): Router {
   r.post(
     "/execute",
     requireRoles(UserRole.YgkChair, UserRole.SystemAdmin),
-    controller.execute
+    asyncHandler(controller.execute)
   );
 
   /**
@@ -197,7 +183,7 @@ export function buildRankingRouter(container: AppContainer): Router {
       UserRole.DeansOfficeStaff,
       UserRole.SystemAdmin
     ),
-    controller.getResults
+    asyncHandler(controller.getResults)
   );
 
   /**
@@ -213,7 +199,7 @@ export function buildRankingRouter(container: AppContainer): Router {
       UserRole.DeansOfficeStaff,
       UserRole.SystemAdmin
     ),
-    controller.getOverview
+    asyncHandler(controller.getOverview)
   );
 
   return r;

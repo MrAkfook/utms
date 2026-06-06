@@ -10,7 +10,7 @@ import {
   ValidationError,
 } from "../../shared/errors";
 import { AuditLogger } from "../../shared/audit";
-import { IApplicationRepository } from "../../shared/repositories";
+import { IAsyncApplicationRepository } from "../../shared/repositories";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -79,7 +79,7 @@ export interface DepartmentRankingOverviewDto {
 // ─── Service Dependencies ─────────────────────────────────────────────────────
 
 export interface RankingServiceDeps {
-  applications: IApplicationRepository;
+  applications: IAsyncApplicationRepository;
   audit: AuditLogger;
 }
 
@@ -143,9 +143,8 @@ export class RankingService {
    * Get YGK queue - applications ready for review
    * Returns applications with status INTAKE_VERIFIED or IN_REVIEW_YGK
    */
-  getYgkQueue() {
-    const applications = this.deps.applications
-      .findAll()
+  async getYgkQueue() {
+    const applications = (await this.deps.applications.findAll())
       .filter(
         (app: Application) =>
           app.currentStatus === ApplicationStatus.IntakeVerified ||
@@ -178,8 +177,11 @@ export class RankingService {
    * Transitions from INTAKE_VERIFIED to IN_REVIEW_YGK
    * Idempotent: if already IN_REVIEW_YGK, returns silently
    */
-  startApplicationReview(applicationId: string, actorUserId: string): void {
-    const app = this.deps.applications.findById(applicationId);
+  async startApplicationReview(
+    applicationId: string,
+    actorUserId: string
+  ): Promise<void> {
+    const app = await this.deps.applications.findById(applicationId);
 
     if (!app) {
       throw new NotFoundError(`Application ${applicationId} not found`);
@@ -197,7 +199,7 @@ export class RankingService {
     }
 
     app.currentStatus = ApplicationStatus.InReviewYgk;
-    this.deps.applications.save(app);
+    await this.deps.applications.save(app);
 
     this.deps.audit.write({
       actorUserId,
@@ -213,8 +215,8 @@ export class RankingService {
   /**
    * Get academic eligibility data for an application
    */
-  getEligibilityData(applicationId: string) {
-    const app = this.deps.applications.findById(applicationId);
+  async getEligibilityData(applicationId: string) {
+    const app = await this.deps.applications.findById(applicationId);
 
     if (!app) {
       throw new NotFoundError(`Application ${applicationId} not found`);
@@ -271,15 +273,15 @@ export class RankingService {
   /**
    * Save eligibility decision for an application
    */
-  saveEligibilityDecision(
+  async saveEligibilityDecision(
     applicationId: string,
     decision: {
       eligible: boolean;
       note?: string;
       actorUserId: string;
     }
-  ): void {
-    const app = this.deps.applications.findById(applicationId);
+  ): Promise<void> {
+    const app = await this.deps.applications.findById(applicationId);
 
     if (!app) {
       throw new NotFoundError(`Application ${applicationId} not found`);
@@ -304,7 +306,7 @@ export class RankingService {
       app.rankingCategory = RankingCategory.Red;
       app.rejectionReason = decision.note;
       app.transferScore = 0;
-      this.deps.applications.save(app);
+      await this.deps.applications.save(app);
 
       this.deps.audit.write({
         actorUserId: decision.actorUserId,
@@ -334,8 +336,8 @@ export class RankingService {
   /**
    * Get department conditions for an application
    */
-  getDepartmentConditions(applicationId: string) {
-    const app = this.deps.applications.findById(applicationId);
+  async getDepartmentConditions(applicationId: string) {
+    const app = await this.deps.applications.findById(applicationId);
 
     if (!app) {
       throw new NotFoundError(`Application ${applicationId} not found`);
@@ -368,15 +370,15 @@ export class RankingService {
   /**
    * Save department conditions decision
    */
-  saveConditionsDecision(
+  async saveConditionsDecision(
     applicationId: string,
     decision: {
       conditionsMet: boolean;
       note?: string;
       actorUserId: string;
     }
-  ): void {
-    const app = this.deps.applications.findById(applicationId);
+  ): Promise<void> {
+    const app = await this.deps.applications.findById(applicationId);
 
     if (!app) {
       throw new NotFoundError(`Application ${applicationId} not found`);
@@ -401,7 +403,7 @@ export class RankingService {
       app.rankingCategory = RankingCategory.Red;
       app.rejectionReason = decision.note;
       app.transferScore = 0;
-      this.deps.applications.save(app);
+      await this.deps.applications.save(app);
 
       this.deps.audit.write({
         actorUserId: decision.actorUserId,
@@ -431,8 +433,8 @@ export class RankingService {
   /**
    * Calculate and display score for review (not yet confirmed)
    */
-  calculateScoreForReview(applicationId: string) {
-    const app = this.deps.applications.findById(applicationId);
+  async calculateScoreForReview(applicationId: string) {
+    const app = await this.deps.applications.findById(applicationId);
 
     if (!app) {
       throw new NotFoundError(`Application ${applicationId} not found`);
@@ -447,7 +449,7 @@ export class RankingService {
     if (!app.submittedYksScore) {
       // 5H: YKS eksik → ÖİDB'ye iade et
       app.currentStatus = ApplicationStatus.IntakeVerified;
-      this.deps.applications.save(app);
+      await this.deps.applications.save(app);
       throw new ValidationError(
         "Score could not be calculated. (431-CALC) - YKS score is missing. Application returned to OIDB queue."
       );
@@ -470,8 +472,11 @@ export class RankingService {
   /**
    * Confirm and save score (makes it permanent)
    */
-  confirmScore(applicationId: string, actorUserId: string): void {
-    const app = this.deps.applications.findById(applicationId);
+  async confirmScore(
+    applicationId: string,
+    actorUserId: string
+  ): Promise<void> {
+    const app = await this.deps.applications.findById(applicationId);
 
     if (!app) {
       throw new NotFoundError(`Application ${applicationId} not found`);
@@ -495,7 +500,7 @@ export class RankingService {
     );
 
     app.transferScore = score;
-    this.deps.applications.save(app);
+    await this.deps.applications.save(app);
 
     this.deps.audit.write({
       actorUserId,
@@ -514,8 +519,11 @@ export class RankingService {
   /**
    * Invalidate score (Go Back functionality)
    */
-  invalidateScore(applicationId: string, actorUserId: string): void {
-    const app = this.deps.applications.findById(applicationId);
+  async invalidateScore(
+    applicationId: string,
+    actorUserId: string
+  ): Promise<void> {
+    const app = await this.deps.applications.findById(applicationId);
 
     if (!app) {
       throw new NotFoundError(`Application ${applicationId} not found`);
@@ -528,7 +536,7 @@ export class RankingService {
     }
 
     app.transferScore = undefined;
-    this.deps.applications.save(app);
+    await this.deps.applications.save(app);
 
     this.deps.audit.write({
       actorUserId,
@@ -546,7 +554,9 @@ export class RankingService {
   /**
    * Execute ranking for a specific department and period
    */
-  executeRanking(input: RankingExecutionInput): RankingSummaryDto {
+  async executeRanking(
+    input: RankingExecutionInput
+  ): Promise<RankingSummaryDto> {
     const { departmentId, periodId, quota, actorUserId } = input;
 
     if (quota <= 0) {
@@ -556,9 +566,12 @@ export class RankingService {
     // Fetch all applications ready for ranking
     // Applications must be IN_REVIEW_YGK (with or without confirmed scores)
     // Those without scores will be evaluated and may be ineligible
-    const applications = this.deps.applications
-      .findByDepartmentAndPeriod(departmentId, periodId)
-      .filter((app) => app.currentStatus === ApplicationStatus.InReviewYgk);
+    const applications = (
+      await this.deps.applications.findByDepartmentAndPeriod(
+        departmentId,
+        periodId
+      )
+    ).filter((app) => app.currentStatus === ApplicationStatus.InReviewYgk);
 
     if (applications.length === 0) {
       throw new NotFoundError(
@@ -647,7 +660,7 @@ export class RankingService {
       app.transferScore = item.transferScore;
       app.rankingCategory = item.category;
       app.currentStatus = item.status;
-      this.deps.applications.save(app);
+      await this.deps.applications.save(app);
 
       this.deps.audit.write({
         actorUserId,
@@ -674,7 +687,7 @@ export class RankingService {
       app.rankingCategory = RankingCategory.Red;
       app.currentStatus = ApplicationStatus.RankedRed;
       app.rejectionReason = item.reason;
-      this.deps.applications.save(app);
+      await this.deps.applications.save(app);
 
       this.deps.audit.write({
         actorUserId,
@@ -741,12 +754,16 @@ export class RankingService {
   /**
    * Get ranking results for a department/period
    */
-  getRankingResults(
+  async getRankingResults(
     departmentId: string,
     periodId: string
-  ): RankingResultDto[] {
-    const applications = this.deps.applications
-      .findByDepartmentAndPeriod(departmentId, periodId)
+  ): Promise<RankingResultDto[]> {
+    const applications = (
+      await this.deps.applications.findByDepartmentAndPeriod(
+        departmentId,
+        periodId
+      )
+    )
       .filter((app) =>
         [
           ApplicationStatus.RankedAsil,
@@ -779,11 +796,11 @@ export class RankingService {
   /**
    * Get department ranking overview (for YGK dashboard)
    */
-  getDepartmentOverview(
+  async getDepartmentOverview(
     departmentId: string,
     periodId: string
-  ): DepartmentRankingOverviewDto {
-    const allApplications = this.deps.applications.findByDepartmentAndPeriod(
+  ): Promise<DepartmentRankingOverviewDto> {
+    const allApplications = await this.deps.applications.findByDepartmentAndPeriod(
       departmentId,
       periodId
     );

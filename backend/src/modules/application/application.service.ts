@@ -27,6 +27,30 @@ export interface ApplicationSummaryDto {
   uploadedDocumentCount: number;
 }
 
+export interface ApplicationDetailDto {
+  applicationId: string;
+  currentStatus: string;
+  submittedAt: string;
+  lastModifiedAt: string;
+  intakeVerifiedAt: string | null;
+  intakeVerifiedBy: string | null;
+  routedToYdyo: boolean;
+  routedToDeansOffice: boolean;
+  ydyoExempt: boolean;
+  correctionReasons: unknown[];
+  rejectionReason: string | null;
+  rankingCategory: string | null;
+  targetDepartmentId: string;
+  targetFacultyId: string;
+  transferType: string;
+  targetedSemester: number | null;
+  submittedGpa: number;
+  submittedYksScore: number | null;
+  yksExamYear: number | null;
+  currentInstitution: string | null;
+  currentDepartment: string | null;
+}
+
 export class ApplicationService {
   async listByStudent(studentId: string): Promise<ApplicationSummaryDto[]> {
     const apps = await prisma.application.findMany({
@@ -85,6 +109,37 @@ export class ApplicationService {
       },
     });
     return { applicationId: application.applicationId };
+  }
+
+  async getById(studentId: string, applicationId: string): Promise<ApplicationDetailDto> {
+    const app = await prisma.application.findFirst({
+      where: { applicationId, studentId },
+    });
+    if (!app) throw new Error("Application not found");
+
+    return {
+      applicationId: app.applicationId,
+      currentStatus: app.currentStatus,
+      submittedAt: app.submittedAt.toISOString(),
+      lastModifiedAt: app.lastModifiedAt.toISOString(),
+      intakeVerifiedAt: app.intakeVerifiedAt?.toISOString() ?? null,
+      intakeVerifiedBy: app.intakeVerifiedBy ?? null,
+      routedToYdyo: app.routedToYdyo,
+      routedToDeansOffice: app.routedToDeansOffice,
+      ydyoExempt: app.ydyoExempt,
+      correctionReasons: Array.isArray(app.correctionReasons) ? app.correctionReasons as unknown[] : [],
+      rejectionReason: app.rejectionReason ?? null,
+      rankingCategory: app.rankingCategory ?? null,
+      targetDepartmentId: app.targetDepartmentId,
+      targetFacultyId: app.targetFacultyId,
+      transferType: app.transferType,
+      targetedSemester: app.targetedSemester ?? null,
+      submittedGpa: app.submittedGpa,
+      submittedYksScore: app.submittedYksScore ?? null,
+      yksExamYear: app.yksExamYear ?? null,
+      currentInstitution: app.currentInstitution ?? null,
+      currentDepartment: app.currentDepartment ?? null,
+    };
   }
 
   async cancel(studentId: string, applicationId: string): Promise<void> {

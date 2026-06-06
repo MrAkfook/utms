@@ -231,6 +231,7 @@ export function StudentDashboard({ user, onLogout, onSwitchRole }: StudentDashbo
           </Button>
           <ApplicationTimeline
             applicationId={selectedAppId}
+            userId={user.id}
             onBack={() => {
               setCurrentView('dashboard');
               setSelectedAppId(null);

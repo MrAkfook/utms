@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Alert, AlertDescription } from '../ui/alert';
 import { AlertCircle, Save, ArrowRight, CheckCircle2, Loader2, ArrowLeft, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { DepartmentId, FacultyId, TransferType, DEPARTMENT_FACULTY } from '../../lib/enums';
 
 // ─── Mock external API responses ─────────────────────────────────────────────
 
@@ -491,9 +492,9 @@ export function ApplicationForm({ onSave, onCancel, draftData, userTckn }: Appli
                     <SelectValue placeholder="Transfer türü seçiniz" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="KURUMLAR_ARASI">Kurumlar Arası Yatay Geçiş</SelectItem>
-                    <SelectItem value="KURUM_ICI">Kurum İçi Yatay Geçiş</SelectItem>
-                    <SelectItem value="DGS">Dikey Geçiş (DGS)</SelectItem>
+                    <SelectItem value={TransferType.KURUMLAR_ARASI}>Kurumlar Arası Yatay Geçiş</SelectItem>
+                    <SelectItem value={TransferType.KURUM_ICI}>Kurum İçi Yatay Geçiş</SelectItem>
+                    <SelectItem value={TransferType.DGS}>Dikey Geçiş (DGS)</SelectItem>
                   </SelectContent>
                 </Select>
                 {fieldErrors.transferType && <p className="text-xs text-red-600">{fieldErrors.transferType}</p>}
@@ -506,12 +507,12 @@ export function ApplicationForm({ onSave, onCancel, draftData, userTckn }: Appli
                     <SelectValue placeholder="Program seçiniz" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="computer-eng">Bilgisayar Mühendisliği</SelectItem>
-                    <SelectItem value="electrical-eng">Elektrik-Elektronik Mühendisliği</SelectItem>
-                    <SelectItem value="mechanical-eng">Makine Mühendisliği</SelectItem>
-                    <SelectItem value="industrial-eng">Endüstri Mühendisliği</SelectItem>
-                    <SelectItem value="civil-eng">İnşaat Mühendisliği</SelectItem>
-                    <SelectItem value="architecture">Mimarlık</SelectItem>
+                    <SelectItem value={DepartmentId.CMPE}>Bilgisayar Mühendisliği</SelectItem>
+                    <SelectItem value={DepartmentId.EE}>Elektrik-Elektronik Mühendisliği</SelectItem>
+                    <SelectItem value={DepartmentId.ME}>Makine Mühendisliği</SelectItem>
+                    <SelectItem value={DepartmentId.IE}>Endüstri Mühendisliği</SelectItem>
+                    <SelectItem value={DepartmentId.CE}>İnşaat Mühendisliği</SelectItem>
+                    <SelectItem value={DepartmentId.ARCH}>Mimarlık</SelectItem>
                   </SelectContent>
                 </Select>
                 {fieldErrors.targetProgram && <p className="text-xs text-red-600">{fieldErrors.targetProgram}</p>}

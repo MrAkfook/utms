@@ -54,6 +54,17 @@ export function DocumentUpload({ applicationId, userId, onComplete, onBack }: Do
   }
 
   async function handleFileUpload(slot: DocumentSlotDto, file: File) {
+    // Reject oversized files before the upload so the user gets an immediate,
+    // specific message instead of a wasted round-trip ending in an HTTP 413.
+    const maxBytes = slot.maxSizeMb * 1024 * 1024;
+    if (file.size > maxBytes) {
+      toast.error(
+        `Dosya boyutu çok büyük (${(file.size / 1024 / 1024).toFixed(1)} MB). ` +
+          `Maksimum dosya boyutu ${slot.maxSizeMb} MB.`,
+      );
+      return;
+    }
+
     setUploading(slot.documentType);
     try {
       const updated = await uploadDocument(applicationId, slot.documentType, file, userId);
@@ -142,7 +153,7 @@ export function DocumentUpload({ applicationId, userId, onComplete, onBack }: Do
           <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
             <li>Başvurunuzu tamamlamak için tüm zorunlu belgeler yüklenmelidir</li>
             <li>Dosyalar PDF, JPG veya PNG formatında olmalıdır</li>
-            <li>Maksimum dosya boyutu: Her belge için 10 MB</li>
+            <li>Maksimum dosya boyutu: Her belge için 4 MB</li>
             <li>Dosyalar sistem standartlarına göre otomatik olarak yeniden adlandırılacaktır</li>
           </ul>
         </AlertDescription>

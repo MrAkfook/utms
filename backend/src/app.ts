@@ -33,7 +33,7 @@ export function createApp(options: CreateAppOptions = {}): { app: Express; conta
     next();
   });
 
-  app.use(express.json({ limit: "12mb" }));
+  app.use(express.json({ limit: "5mb" }));
 
   app.get("/health", (_req: Request, res: Response) => {
     res.json({ status: "ok", scope: "Scenario 1 (Login) & Scenario 3 (Document Upload) & Scenario 4 (OIDB) & Scenario 3.1 (YDYO) & Scenario 5 (Ranking) & Scenario 6 (Intibak)" });

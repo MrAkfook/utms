@@ -9,14 +9,14 @@ import { DocumentUploadController } from "./document-upload.controller";
 // Files are validated and stored as metadata in Postgres; buffer held in memory only during the request
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 11 * 1024 * 1024 }, // 11 MB hard limit (service validates the 10 MB business rule)
+  limits: { fileSize: 4.5 * 1024 * 1024 }, // 4.5 MB hard limit (service validates the 4 MB business rule)
 });
 
 /**
  * Wraps multer so a rejected upload returns the same friendly business message
  * the service uses, instead of a raw "HTTP 413 Payload Too Large" (the defect
- * reported in Test Plan v2, TC 3B-1). Files of 10–11 MB still reach the service
- * and are rejected there; anything above multer's 11 MB guard is caught here and
+ * reported in Test Plan v2, TC 3B-1). Files of 4–4.5 MB still reach the service
+ * and are rejected there; anything above multer's 4.5 MB guard is caught here and
  * converted to a 400 ValidationError that the error handler renders cleanly.
  */
 function uploadSingleFile(req: Request, res: Response, next: NextFunction): void {
@@ -25,7 +25,7 @@ function uploadSingleFile(req: Request, res: Response, next: NextFunction): void
       if (err.code === "LIMIT_FILE_SIZE") {
         return next(
           new ValidationError(
-            "Invalid format or file size. Please upload PDF/JPG/PNG under 10 MB.",
+            "Invalid format or file size. Please upload PDF/JPG/PNG under 4 MB.",
             { code: "FILE_TOO_LARGE" },
           ),
         );

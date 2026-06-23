@@ -96,7 +96,7 @@ const ALLOWED_MIME_TYPES = new Set([
 ]);
 
 const ALLOWED_EXTENSIONS = new Set(["pdf", "jpg", "jpeg", "png"]);
-const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+const MAX_SIZE_BYTES = 4 * 1024 * 1024; // 4 MB (kept under Vercel's 4.5 MB serverless request cap)
 
 const ACCEPTED_FORMATS: Record<DocumentType, string[]> = {
   [DocumentType.Transcript]: ["PDF", "JPG", "PNG"],
@@ -125,7 +125,7 @@ export function isEncryptedPdf(buffer: Buffer): boolean {
  * Validates an uploaded document. Throws ValidationError on the first problem.
  * Exported (and pure) so the size / format / integrity rules can be unit-tested
  * without a database or blob store.
- *   - TC 3B-1: file exceeds 10 MB              → rejected
+ *   - TC 3B-1: file exceeds 4 MB               → rejected
  *   - TC 3B-2: unsupported format (e.g. .docx) → rejected
  *   - TC 3C-1: password-protected PDF          → rejected (was the bug)
  *   - TC 3C-2: corrupt PDF (no %PDF header)    → rejected
@@ -136,7 +136,7 @@ export function assertValidUpload(
 ): void {
   if (file.size > MAX_SIZE_BYTES) {
     throw new ValidationError(
-      "Invalid format or file size. Please upload PDF/JPG/PNG under 10 MB.",
+      "Invalid format or file size. Please upload PDF/JPG/PNG under 4 MB.",
       { code: "FILE_TOO_LARGE", sizeMb: Number((file.size / 1024 / 1024).toFixed(1)) },
     );
   }
@@ -145,13 +145,13 @@ export function assertValidUpload(
   const allowed = ACCEPTED_FORMATS[documentType].map((f) => f.toLowerCase());
   if (!ALLOWED_EXTENSIONS.has(ext) || !allowed.includes(ext)) {
     throw new ValidationError(
-      "Invalid format or file size. Please upload PDF/JPG/PNG under 10 MB.",
+      "Invalid format or file size. Please upload PDF/JPG/PNG under 4 MB.",
       { code: "INVALID_FORMAT", ext, accepted: allowed },
     );
   }
 
   if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
-    throw new ValidationError("Invalid format or file size. Please upload PDF/JPG/PNG under 10 MB.", {
+    throw new ValidationError("Invalid format or file size. Please upload PDF/JPG/PNG under 4 MB.", {
       code: "INVALID_MIME",
       mimetype: file.mimetype,
     });
@@ -262,7 +262,7 @@ export class DocumentUploadService {
           : null,
         versionCount: doc?.versions.length ?? 0,
         acceptedFormats: ACCEPTED_FORMATS[type],
-        maxSizeMb: 10,
+        maxSizeMb: 4,
       };
     });
 
@@ -384,7 +384,7 @@ export class DocumentUploadService {
       },
       versionCount: result.totalVersions,
       acceptedFormats: ACCEPTED_FORMATS[documentType],
-      maxSizeMb: 10,
+      maxSizeMb: 4,
     };
   }
 

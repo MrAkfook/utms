@@ -105,6 +105,14 @@ export async function uploadDocument(
     headers: authHeaders(userId),
     body: formData,
   });
+  // A 413 from the Vercel serverless platform (4.5 MB request cap) is returned
+  // before the request reaches the backend, so it has no JSON body with a
+  // message. Surface a specific size error instead of a bare "HTTP 413".
+  if (res.status === 413) {
+    throw new Error(
+      'Dosya boyutu çok büyük. Lütfen 4 MB altında bir PDF, JPG veya PNG dosyası yükleyin.',
+    );
+  }
   return handleResponse(res);
 }
 

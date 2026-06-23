@@ -31,10 +31,10 @@ describe("assertValidUpload", () => {
     expect(() => assertValidUpload(file(), DocumentType.Transcript)).not.toThrow();
   });
 
-  it("TC 3B-1: rejects a file larger than 10 MB", () => {
+  it("TC 3B-1: rejects a file larger than 4 MB", () => {
     expect(() =>
       assertValidUpload(file({ size: 15 * 1024 * 1024 }), DocumentType.Curriculum),
-    ).toThrow(/10 MB/i);
+    ).toThrow(/4 MB/i);
   });
 
   it("TC 3B-2: rejects an unsupported format (.docx)", () => {
@@ -59,6 +59,21 @@ describe("assertValidUpload", () => {
     expect(() => assertValidUpload(file({ buffer: encrypted }), DocumentType.Transcript)).toThrow(
       /password-protected/i,
     );
+  });
+
+  it("TC 3C-1b: rejects an encrypted PDF even when renamed to a non-PDF extension", () => {
+    const encrypted = Buffer.from(
+      "%PDF-1.6\n1 0 obj<<>>endobj\ntrailer<< /Root 1 0 R /Encrypt 9 0 R /ID[<a><b>] >>\n%%EOF",
+      "latin1",
+    );
+    // Same encrypted bytes presented as a PNG must still be rejected — the
+    // check keys off the %PDF content, not the user-supplied extension.
+    expect(() =>
+      assertValidUpload(
+        file({ originalname: "scan.png", mimetype: "image/png", buffer: encrypted }),
+        DocumentType.Transcript,
+      ),
+    ).toThrow(/password-protected/i);
   });
 
   it("TC 3C-2: rejects a corrupt PDF with no %PDF header", () => {

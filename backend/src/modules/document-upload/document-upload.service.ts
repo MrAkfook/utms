@@ -157,19 +157,23 @@ export function assertValidUpload(
     });
   }
 
-  if (ext === "pdf") {
-    const header = file.buffer.subarray(0, 5).toString("latin1");
-    if (!header.startsWith("%PDF")) {
-      throw new ValidationError("The file appears to be corrupt and could not be read.", {
-        code: "FILE_CORRUPT",
-      });
-    }
-    if (isEncryptedPdf(file.buffer)) {
-      throw new ValidationError(
-        "The PDF is password-protected. Please upload an unprotected copy.",
-        { code: "FILE_ENCRYPTED" },
-      );
-    }
+  // Integrity checks must be driven by the file's actual content, not its
+  // (user-controlled) extension. A password-protected PDF renamed to .png/.jpg
+  // would otherwise skip the encryption check below and be stored anyway —
+  // the reported defect where encrypted files were accepted.
+  const header = file.buffer.subarray(0, 5).toString("latin1");
+  const looksLikePdf = header.startsWith("%PDF");
+
+  if (ext === "pdf" && !looksLikePdf) {
+    throw new ValidationError("The file appears to be corrupt and could not be read.", {
+      code: "FILE_CORRUPT",
+    });
+  }
+  if (looksLikePdf && isEncryptedPdf(file.buffer)) {
+    throw new ValidationError(
+      "The PDF is password-protected. Please upload an unprotected copy.",
+      { code: "FILE_ENCRYPTED" },
+    );
   }
 }
 

@@ -24,3 +24,26 @@ export function intibakToDomain(row: PrismaIntibakRow): IntibakTable {
     savedAt: row.savedAt ? row.savedAt.toISOString() : undefined,
   };
 }
+
+/**
+ * Build the full set of scalar columns to upsert a domain IntibakTable into Neon.
+ * JSON columns (previous/target/mappings) are stored as-is; createdAt is set on
+ * create so re-saves of the same row keep the original timestamp.
+ */
+export function intibakToPrismaUpsert(
+  table: IntibakTable
+): Prisma.IntibakTableUncheckedCreateInput {
+  return {
+    intibakTableId: table.intibakTableId,
+    applicationId: table.applicationId,
+    previousCourses: table.previousCourses as unknown as Prisma.InputJsonValue,
+    targetCurriculum: table.targetCurriculum as unknown as Prisma.InputJsonValue,
+    mappings: table.mappings as unknown as Prisma.InputJsonValue,
+    manualEntryUsed: table.manualEntryUsed,
+    noSuggestionsFound: table.noSuggestionsFound,
+    isLocked: table.isLocked,
+    createdBy: table.createdBy,
+    createdAt: new Date(table.createdAt),
+    savedAt: table.savedAt ? new Date(table.savedAt) : null,
+  };
+}

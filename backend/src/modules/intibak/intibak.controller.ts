@@ -48,34 +48,34 @@ export class IntibakController {
     res.json(dto);
   };
 
-  addManualCourse = (req: Request, res: Response): void => {
+  addManualCourse = async (req: Request, res: Response): Promise<void> => {
     this.requireUser(req);
     const { applicationId } = req.params;
     const body = ManualCourseSchema.parse(req.body);
-    const dto = this.service.addManualCourse(applicationId, body);
+    const dto = await this.service.addManualCourse(applicationId, body);
     res.json(dto);
   };
 
-  generateSuggestions = (req: Request, res: Response): void => {
+  generateSuggestions = async (req: Request, res: Response): Promise<void> => {
     this.requireUser(req);
     const { applicationId } = req.params;
-    const dto = this.service.generateSuggestionsForManual(applicationId);
+    const dto = await this.service.generateSuggestionsForManual(applicationId);
     res.json(dto);
   };
 
-  updateMappings = (req: Request, res: Response): void => {
+  updateMappings = async (req: Request, res: Response): Promise<void> => {
     const userId = this.requireUser(req);
     const { applicationId } = req.params;
     const body = UpdateMappingsSchema.parse(req.body);
-    const dto = this.service.updateMappings(applicationId, userId, body.mutations);
+    const dto = await this.service.updateMappings(applicationId, userId, body.mutations);
     res.json(dto);
   };
 
-  markNotExempt = (req: Request, res: Response): void => {
+  markNotExempt = async (req: Request, res: Response): Promise<void> => {
     const userId = this.requireUser(req);
     const { applicationId } = req.params;
     const body = NotExemptSchema.parse(req.body);
-    const dto = this.service.markNotExempt(applicationId, body.sourceCourseCodes, userId);
+    const dto = await this.service.markNotExempt(applicationId, body.sourceCourseCodes, userId);
     res.json(dto);
   };
 

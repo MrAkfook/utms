@@ -22,10 +22,10 @@ import {
 import {
   IAsyncApplicationRepository,
   IAsyncBoardReviewStateRepository,
+  IAsyncIntibakRepository,
   IAsyncPackageRepository,
   ICurriculumRepository,
   IDocumentRepository,
-  IIntibakRepository,
 } from "../../shared/repositories";
 import { OcrParserMockClient } from "../../shared/external/ocr-parser-client";
 import { AuditLogger } from "../../shared/audit";
@@ -35,7 +35,7 @@ import { BoardReviewState } from "../board/board.types";
 export interface IntibakServiceDeps {
   applications: IAsyncApplicationRepository;
   documents: IDocumentRepository;
-  intibakTables: IIntibakRepository;
+  intibakTables: IAsyncIntibakRepository;
   curriculum: ICurriculumRepository;
   packages: IAsyncPackageRepository;
   boardStates: IAsyncBoardReviewStateRepository;
@@ -140,7 +140,7 @@ export class IntibakService {
 
     const parsed = this.deps.ocr.parse(transcript.documentId);
 
-    let existing = this.deps.intibakTables.findByApplicationId(applicationId);
+    let existing = await this.deps.intibakTables.findByApplicationId(applicationId);
     if (existing) {
       return this.toDto(existing, curriculum.courses);
     }
@@ -164,7 +164,7 @@ export class IntibakService {
       createdBy: actorUserId,
       createdAt: new Date().toISOString(),
     };
-    this.deps.intibakTables.save(table);
+    await this.deps.intibakTables.save(table);
     application.intibakTableId = table.intibakTableId;
     await this.deps.applications.save(application);
 
@@ -181,8 +181,8 @@ export class IntibakService {
     return this.toDto(table, curriculum.courses);
   }
 
-  addManualCourse(applicationId: string, course: ManualCourseInput): IntibakInterfaceDto {
-    const table = this.requireTable(applicationId);
+  async addManualCourse(applicationId: string, course: ManualCourseInput): Promise<IntibakInterfaceDto> {
+    const table = await this.requireTable(applicationId);
     if (table.isLocked) {
       throw new ConflictError("INTIBAK_LOCKED", "Cannot edit a saved intibak table.");
     }
@@ -193,12 +193,12 @@ export class IntibakService {
         "Manual course entry is only available when transcript could not be parsed.",
       );
     }
-    this.deps.intibakTables.save(table);
+    await this.deps.intibakTables.save(table);
     return this.toDto(table, table.targetCurriculum);
   }
 
-  generateSuggestionsForManual(applicationId: string): IntibakInterfaceDto {
-    const table = this.requireTable(applicationId);
+  async generateSuggestionsForManual(applicationId: string): Promise<IntibakInterfaceDto> {
+    const table = await this.requireTable(applicationId);
     if (!table.manualEntryUsed) {
       throw new ConflictError(
         "MANUAL_ENTRY_NOT_ENABLED",
@@ -207,16 +207,16 @@ export class IntibakService {
     }
     const suggestions = this.suggestions.generate(table.previousCourses, table.targetCurriculum);
     table.mappings = this.buildMappingsFromSuggestions(table.previousCourses, suggestions);
-    this.deps.intibakTables.save(table);
+    await this.deps.intibakTables.save(table);
     return this.toDto(table, table.targetCurriculum);
   }
 
-  updateMappings(
+  async updateMappings(
     applicationId: string,
     actorUserId: string,
     mutations: MappingMutation[],
-  ): IntibakInterfaceDto {
-    const table = this.requireTable(applicationId);
+  ): Promise<IntibakInterfaceDto> {
+    const table = await this.requireTable(applicationId);
     if (table.isLocked) {
       throw new ConflictError("INTIBAK_LOCKED", "Cannot edit a saved intibak table.");
     }
@@ -230,7 +230,7 @@ export class IntibakService {
       }
       this.applyMutation(table, m);
     }
-    this.deps.intibakTables.save(table);
+    await this.deps.intibakTables.save(table);
     this.deps.audit.write({
       actorUserId,
       actorRole: UserRole.YgkMember,
@@ -244,7 +244,7 @@ export class IntibakService {
   }
 
   async save(applicationId: string, actorUserId: string): Promise<{ table: IntibakTable; message: string }> {
-    const table = this.requireTable(applicationId);
+    const table = await this.requireTable(applicationId);
     if (table.isLocked) {
       throw new ConflictError("INTIBAK_LOCKED", "Intibak table is already saved and locked.");
     }
@@ -257,7 +257,7 @@ export class IntibakService {
     }
     table.isLocked = true;
     table.savedAt = new Date().toISOString();
-    this.deps.intibakTables.save(table);
+    await this.deps.intibakTables.save(table);
     const application = await this.requireApp(applicationId);
     application.currentStatus = ApplicationStatus.IntibakCompleted;
     await this.deps.applications.save(application);
@@ -274,7 +274,7 @@ export class IntibakService {
     return { table, message: "Intibak table saved." };
   }
 
-  markNotExempt(applicationId: string, sourceCourseCodes: string[], actorUserId: string): IntibakInterfaceDto {
+  async markNotExempt(applicationId: string, sourceCourseCodes: string[], actorUserId: string): Promise<IntibakInterfaceDto> {
     return this.updateMappings(applicationId, actorUserId, [
       {
         sourceCourseCodes,
@@ -322,17 +322,19 @@ export class IntibakService {
   async listCandidates(departmentId: string, periodId: string): Promise<IntibakCandidatesDto> {
     const apps = await this.deps.applications.findByDepartmentAndPeriod(departmentId, periodId);
     const ranked = apps.filter((a) => a.rankingCategory);
-    const candidates: IntibakCandidateDto[] = ranked
-      .map((a) => ({
-        applicationId: a.applicationId,
-        studentFullName: a.studentFullName,
-        studentTckn: a.studentTckn,
-        rankingCategory: a.rankingCategory ?? null,
-        currentStatus: a.currentStatus,
-        intibakStarted: !!this.deps.intibakTables.findByApplicationId(a.applicationId),
-        intibakCompleted: a.currentStatus === ApplicationStatus.IntibakCompleted,
-      }))
-      .sort((x, y) => x.studentFullName.localeCompare(y.studentFullName));
+    const candidates: IntibakCandidateDto[] = (
+      await Promise.all(
+        ranked.map(async (a) => ({
+          applicationId: a.applicationId,
+          studentFullName: a.studentFullName,
+          studentTckn: a.studentTckn,
+          rankingCategory: a.rankingCategory ?? null,
+          currentStatus: a.currentStatus,
+          intibakStarted: !!(await this.deps.intibakTables.findByApplicationId(a.applicationId)),
+          intibakCompleted: a.currentStatus === ApplicationStatus.IntibakCompleted,
+        })),
+      )
+    ).sort((x, y) => x.studentFullName.localeCompare(y.studentFullName));
 
     const asil = candidates.filter((c) => c.rankingCategory === RankingCategory.Asil);
     const asilCompleted = asil.filter((c) => c.intibakCompleted).length;
@@ -369,7 +371,7 @@ export class IntibakService {
 
     const intibakTableIds: string[] = [];
     for (const appId of overview.asil) {
-      const t = this.deps.intibakTables.findByApplicationId(appId);
+      const t = await this.deps.intibakTables.findByApplicationId(appId);
       if (t && t.isLocked) intibakTableIds.push(t.intibakTableId);
     }
 
@@ -435,8 +437,8 @@ export class IntibakService {
     return a;
   }
 
-  private requireTable(applicationId: string): IntibakTable {
-    const t = this.deps.intibakTables.findByApplicationId(applicationId);
+  private async requireTable(applicationId: string): Promise<IntibakTable> {
+    const t = await this.deps.intibakTables.findByApplicationId(applicationId);
     if (!t) throw new NotFoundError("Intibak table not prepared yet.");
     return t;
   }

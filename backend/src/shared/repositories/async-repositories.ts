@@ -15,7 +15,7 @@ import {
   boardStateToDomain,
   boardStateToPrismaUpsert,
 } from "../mappers/board-state-mapper";
-import { intibakToDomain } from "../mappers/intibak-mapper";
+import { intibakToDomain, intibakToPrismaUpsert } from "../mappers/intibak-mapper";
 import { IntibakTable } from "../types";
 import {
   IAsyncApplicationRepository,
@@ -249,6 +249,16 @@ export class PrismaIntibakRepository implements IAsyncIntibakRepository {
     });
     return row ? intibakToDomain(row) : undefined;
   }
+
+  async save(table: IntibakTable): Promise<IntibakTable> {
+    const data = intibakToPrismaUpsert(table);
+    const row = await prisma.intibakTable.upsert({
+      where: { intibakTableId: table.intibakTableId },
+      create: data,
+      update: data,
+    });
+    return intibakToDomain(row);
+  }
 }
 
 export class InMemoryAsyncIntibakRepository implements IAsyncIntibakRepository {
@@ -256,5 +266,9 @@ export class InMemoryAsyncIntibakRepository implements IAsyncIntibakRepository {
   async findById(id: string) { return this.inner.findById(id); }
   async findByApplicationId(applicationId: string) {
     return this.inner.findByApplicationId(applicationId);
+  }
+  async save(table: IntibakTable) {
+    this.inner.save(table);
+    return table;
   }
 }

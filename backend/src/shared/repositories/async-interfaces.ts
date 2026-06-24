@@ -56,4 +56,5 @@ export interface IAsyncBoardReviewStateRepository {
 export interface IAsyncIntibakRepository {
   findById(intibakTableId: string): Promise<IntibakTable | undefined>;
   findByApplicationId(applicationId: string): Promise<IntibakTable | undefined>;
+  save(table: IntibakTable): Promise<IntibakTable>;
 }

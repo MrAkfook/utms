@@ -7,12 +7,15 @@ import { UserRole } from "../../shared/types";
 import {
   IAsyncApplicationRepository,
   IAsyncBoardReviewStateRepository,
+  IAsyncIntibakRepository,
   IAsyncPackageRepository,
   InMemoryAsyncApplicationRepository,
   InMemoryAsyncBoardReviewStateRepository,
+  InMemoryAsyncIntibakRepository,
   InMemoryAsyncPackageRepository,
   PrismaApplicationRepository,
   PrismaBoardReviewStateRepository,
+  PrismaIntibakRepository,
   PrismaPackageRepository,
 } from "../../shared/repositories";
 import { IntibakService } from "./intibak.service";
@@ -33,12 +36,15 @@ export function buildIntibakRouter(container: AppContainer): Router {
   const boardStates: IAsyncBoardReviewStateRepository = useDatabase
     ? new PrismaBoardReviewStateRepository()
     : new InMemoryAsyncBoardReviewStateRepository(container.boardStates);
+  const intibakTables: IAsyncIntibakRepository = useDatabase
+    ? new PrismaIntibakRepository()
+    : new InMemoryAsyncIntibakRepository(container.intibakTables);
 
   const audit = new AuditLogger(container.audit);
   const service = new IntibakService({
     applications,
     documents: container.documents,
-    intibakTables: container.intibakTables,
+    intibakTables,
     curriculum: container.curriculum,
     packages,
     boardStates,

@@ -8,8 +8,8 @@ import {
 import {
   IAsyncApplicationRepository,
   IAsyncBoardReviewStateRepository,
+  IAsyncIntibakRepository,
   IAsyncPackageRepository,
-  IIntibakRepository,
 } from "../../shared/repositories";
 import { AuditLogger, NotificationService } from "../../shared/audit";
 import { INotificationStore } from "../notification/notification.store";
@@ -42,7 +42,7 @@ import {
 
 export interface BoardServiceDeps {
   applications: IAsyncApplicationRepository;
-  intibakTables: IIntibakRepository;
+  intibakTables: IAsyncIntibakRepository;
   packages: IAsyncPackageRepository;
   boardStates: IAsyncBoardReviewStateRepository;
   audit: AuditLogger;
@@ -130,15 +130,12 @@ export class BoardService {
     const missingNames: string[] = [];
     for (const applicationId of pkg.asilApplicationIds) {
       const app = await this.deps.applications.findById(applicationId);
-      if (!app || !app.intibakTableId) {
-        missingIds.push(applicationId);
-        missingNames.push(app?.studentFullName ?? applicationId);
-        continue;
-      }
-      const table = this.deps.intibakTables.findById(app.intibakTableId);
+      // Look the intibak table up by applicationId (Neon at runtime) rather
+      // than via app.intibakTableId — the Prisma Application has no such column.
+      const table = await this.deps.intibakTables.findByApplicationId(applicationId);
       if (!table || !table.isLocked || !table.savedAt) {
         missingIds.push(applicationId);
-        missingNames.push(app.studentFullName);
+        missingNames.push(app?.studentFullName ?? applicationId);
       }
     }
 

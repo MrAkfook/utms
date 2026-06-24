@@ -1,4 +1,4 @@
-import { Application, DepartmentQuota, Document, EvaluationPackage } from "../types";
+import { Application, DepartmentQuota, Document, EvaluationPackage, IntibakTable } from "../types";
 import { BoardReviewState } from "../../modules/board/board.types";
 
 // Async repository contracts used by the ranking module so its data source can
@@ -49,4 +49,11 @@ export interface IAsyncBoardReviewStateRepository {
   findAll(): Promise<BoardReviewState[]>;
   save(state: BoardReviewState): Promise<BoardReviewState>;
   put(state: BoardReviewState): Promise<void>;
+}
+
+// Board's intibak completeness gate (TC-7B/7D) reads intibak tables by
+// applicationId from Neon at runtime — the legacy sync repo is in-memory only.
+export interface IAsyncIntibakRepository {
+  findById(intibakTableId: string): Promise<IntibakTable | undefined>;
+  findByApplicationId(applicationId: string): Promise<IntibakTable | undefined>;
 }

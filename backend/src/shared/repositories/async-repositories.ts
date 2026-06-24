@@ -15,16 +15,20 @@ import {
   boardStateToDomain,
   boardStateToPrismaUpsert,
 } from "../mappers/board-state-mapper";
+import { intibakToDomain } from "../mappers/intibak-mapper";
+import { IntibakTable } from "../types";
 import {
   IAsyncApplicationRepository,
   IAsyncBoardReviewStateRepository,
   IAsyncDocumentRepository,
+  IAsyncIntibakRepository,
   IAsyncPackageRepository,
   IAsyncQuotaRepository,
 } from "./async-interfaces";
 import {
   InMemoryApplicationRepository,
   InMemoryDocumentRepository,
+  InMemoryIntibakRepository,
   InMemoryPackageRepository,
   InMemoryQuotaRepository,
 } from "./in-memory";
@@ -228,4 +232,29 @@ export class InMemoryAsyncBoardReviewStateRepository
   async findAll() { return this.inner.findAll(); }
   async save(state: BoardReviewState) { return this.inner.save(state); }
   async put(state: BoardReviewState) { this.inner.put(state); }
+}
+
+// ─── Intibak read access for the board gate (Scenarios 7B/7D) ─────────────────
+
+export class PrismaIntibakRepository implements IAsyncIntibakRepository {
+  async findById(intibakTableId: string): Promise<IntibakTable | undefined> {
+    const row = await prisma.intibakTable.findUnique({ where: { intibakTableId } });
+    return row ? intibakToDomain(row) : undefined;
+  }
+
+  async findByApplicationId(applicationId: string): Promise<IntibakTable | undefined> {
+    const row = await prisma.intibakTable.findFirst({
+      where: { applicationId },
+      orderBy: { createdAt: "desc" },
+    });
+    return row ? intibakToDomain(row) : undefined;
+  }
+}
+
+export class InMemoryAsyncIntibakRepository implements IAsyncIntibakRepository {
+  constructor(private readonly inner: InMemoryIntibakRepository) {}
+  async findById(id: string) { return this.inner.findById(id); }
+  async findByApplicationId(applicationId: string) {
+    return this.inner.findByApplicationId(applicationId);
+  }
 }

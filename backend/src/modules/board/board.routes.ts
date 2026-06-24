@@ -7,12 +7,15 @@ import { UserRole } from "../../shared/types";
 import {
   IAsyncApplicationRepository,
   IAsyncBoardReviewStateRepository,
+  IAsyncIntibakRepository,
   IAsyncPackageRepository,
   InMemoryAsyncApplicationRepository,
   InMemoryAsyncBoardReviewStateRepository,
+  InMemoryAsyncIntibakRepository,
   InMemoryAsyncPackageRepository,
   PrismaApplicationRepository,
   PrismaBoardReviewStateRepository,
+  PrismaIntibakRepository,
   PrismaPackageRepository,
 } from "../../shared/repositories";
 import { BoardService } from "./board.service";
@@ -36,12 +39,15 @@ export function buildBoardRouter(
   const boardStates: IAsyncBoardReviewStateRepository = useDatabase
     ? new PrismaBoardReviewStateRepository()
     : new InMemoryAsyncBoardReviewStateRepository(container.boardStates);
+  const intibakTables: IAsyncIntibakRepository = useDatabase
+    ? new PrismaIntibakRepository()
+    : new InMemoryAsyncIntibakRepository(container.intibakTables);
 
   const audit = new AuditLogger(container.audit);
   const notifications = new NotificationService(container.notifications);
   const service = new BoardService({
     applications,
-    intibakTables: container.intibakTables,
+    intibakTables,
     packages,
     boardStates,
     audit,
